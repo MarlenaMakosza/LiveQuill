@@ -1,0 +1,118 @@
+# Builds the Android app, the desktop app and the server.
+# - Push a tag like v0.3.0: publishes a GitHub Release and the server image on GHCR.
+# - Run manually (Actions -> Release -> Run workflow): builds only, files go to the run artifacts.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v4
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            V="${GITHUB_REF_NAME#v}"
+          else
+            V="$(grep '^appVersion=' gradle.properties | cut -d= -f2)"
+          fi
+          echo "VERSION=$V" >> "$GITHUB_ENV"
+          # Image names must be lowercase.
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/livequill-server" >> "$GITHUB_ENV"
+          echo "Version: $V"
+
+      - name: Signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.LIVEQUILL_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::LIVEQUILL_KEYSTORE_BASE64 is not set: the APK will be unsigned"
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "LIVEQUILL_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Build
+        env:
+          LIVEQUILL_STORE_PASSWORD: ${{ secrets.LIVEQUILL_STORE_PASSWORD }}
+          LIVEQUILL_KEY_ALIAS: ${{ secrets.LIVEQUILL_KEY_ALIAS }}
+          LIVEQUILL_KEY_PASSWORD: ${{ secrets.LIVEQUILL_KEY_PASSWORD }}
+        run: >
+          ./gradlew --console=plain -PappVersion="$VERSION"
+          :android:assembleRelease :server:installDist :desktop:createDistributable
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/out"
+          mkdir -p "$out"
+
+          cp android/build/outputs/apk/release/android-release*.apk "$out/livequill-$VERSION.apk"
+
+          d="livequill-desktop-$VERSION"
+          mkdir -p "$RUNNER_TEMP/$d"
+          cp -r desktop/build/compose/binaries/main/app/HandNotes "$RUNNER_TEMP/$d/desktop"
+          cp install-desktop.sh README.md README.pl.md LICENSE "$RUNNER_TEMP/$d/"
+          tar -C "$RUNNER_TEMP" -czf "$out/$d-linux-x64.tar.gz" "$d"
+
+          s="livequill-server-$VERSION"
+          mkdir -p "$RUNNER_TEMP/$s"
+          cp -r server/build/install/handnotes-server/. "$RUNNER_TEMP/$s/"
+          cp LICENSE "$RUNNER_TEMP/$s/"
+          tar -C "$RUNNER_TEMP" -czf "$out/$s.tar.gz" "$s"
+
+          (cd "$out" && sha256sum * > SHA256SUMS)
+          ls -la "$out"
+          echo "OUT=$out" >> "$GITHUB_ENV"
+
+      - name: Upload build files
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: livequill-${{ env.VERSION }}
+          path: ${{ env.OUT }}/*
+
+      - name: Log in to GHCR
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Server image
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v7
+        with:
+          context: server
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ env.VERSION }}
+            ${{ env.IMAGE }}:latest
+
+      - name: GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          name: LiveQuill ${{ env.VERSION }}
+          generate_release_notes: true
+          prerelease: ${{ startsWith(env.VERSION, '0.') }}
+          files: ${{ env.OUT }}/*

@@ -1,4 +1,4 @@
-# HandNotes
+# LiveQuill
 
 [English](README.md) · **Polski**
 
@@ -12,6 +12,27 @@ Odręczny notatnik. Piszesz rysikiem na tablecie z Androidem (z naciskiem), serw
 Bez sieci tablet zapisuje wszystko lokalnie i wysyła, gdy serwer znów będzie osiągalny.
 
 ---
+
+## 0. Gotowe pliki (bez budowania)
+
+Gotowe wersje są na stronie [Releases](https://github.com/MarlenaMakosza/LiveQuill/releases):
+
+| Plik | Co z nim zrobić |
+|---|---|
+| `livequill-<wersja>.apk` | zainstaluj na tablecie (punkt 4) |
+| `livequill-desktop-<wersja>-linux-x64.tar.gz` | rozpakuj i uruchom w środku `./install-desktop.sh` (Java jest w paczce) |
+| `livequill-server-<wersja>.tar.gz` | serwer bez Dockera: `HANDNOTES_TOKEN=... ./bin/handnotes-server` (Java 17+) |
+| `SHA256SUMS` | sumy kontrolne: `sha256sum -c SHA256SUMS` |
+
+Serwer jest też gotowym obrazem Dockera, więc nic nie trzeba budować:
+
+```bash
+docker run -d --name livequill --restart unless-stopped -p 8787:8787 \
+  -e HANDNOTES_TOKEN=twoj-token -v "$PWD/data:/data" \
+  ghcr.io/marlenamakosza/livequill-server:latest
+```
+
+Jeśli korzystasz z gotowych plików, pomiń punkty 1–2 (i budowanie w punkcie 3).
 
 ## 1. Wymagania (raz)
 
@@ -154,7 +175,7 @@ Status na pasku:
 ./install-desktop.sh
 ```
 
-Skrypt instaluje aplikację do `~/.local/opt/handnotes` i dodaje **HandNotes** do menu KDE. Przy pierwszym starcie wejdź w **Opcje**:
+Skrypt instaluje aplikację do `~/.local/opt/handnotes` i dodaje **LiveQuill** do menu KDE. Przy pierwszym starcie wejdź w **Opcje**:
 
 - adres: `localhost`, jeśli serwer działa na tym samym komputerze, inaczej jego IP;
 - token: wartość z `.env`.
@@ -170,7 +191,7 @@ Ustawienia leżą w `~/.config/handnotes/desktop.properties`.
 | Cała tablica | „Wszystko” |
 | Tryb ciemny/jasny | „Ciemny” / „Jasny” |
 
-Autostart po zalogowaniu: Ustawienia systemowe KDE → Autostart → Dodaj aplikację → HandNotes.
+Autostart po zalogowaniu: Ustawienia systemowe KDE → Autostart → Dodaj aplikację → LiveQuill.
 
 ## 6. Aktualizacja po zmianach w kodzie
 
@@ -233,8 +254,25 @@ desktop/  Compose Desktop
 docker/   obraz budujący (JDK 21 + Android SDK + Gradle)
 ```
 
+## Wydawanie nowej wersji
+
+1. Ustaw `appVersion` w `gradle.properties` (np. `0.4.0`) i zrób commit.
+2. Wypchnij tag:
+   ```bash
+   git tag v0.4.0
+   git push origin v0.4.0
+   ```
+3. GitHub Actions ([workflow](.github/workflows/release.yml)) zbuduje i podpisze APK, spakuje aplikację na PC i serwer, wypchnie obraz serwera do GHCR i opublikuje Release. Postęp widać w zakładce Actions.
+
+Wersje zaczynające się od `0.` są oznaczane jako pre-release. Ręczne uruchomienie workflow (Actions → Release → Run workflow) tylko buduje; pliki trafiają do artefaktów uruchomienia.
+
+Klucz do podpisu APK leży w sekretach repozytorium (`LIVEQUILL_KEYSTORE_BASE64`, `LIVEQUILL_STORE_PASSWORD`, `LIVEQUILL_KEY_ALIAS`, `LIVEQUILL_KEY_PASSWORD`). Lokalna kopia jest w `~/.config/livequill-signing/`. Zrób jej kopię zapasową: APK podpisane innym kluczem nie zainstaluje się na poprzednią wersję.
+
 ## Pomysły na dalej
 
 - Jeszcze mniejsze opóźnienie pióra: rysowanie z pominięciem bufora klatki (`androidx.graphics` front-buffer) i `MotionEventPredictor`.
 - Eksport tablicy do PDF/SVG albo do `.xopp` (Xournal++).
-- Podpis release zamiast klucza debug.
+
+## Licencja
+
+[MIT](LICENSE)

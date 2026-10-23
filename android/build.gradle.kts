@@ -2,6 +2,18 @@ plugins {
     id("com.android.application")
 }
 
+val appVersion = providers.gradleProperty("appVersion").get()
+
+/** 1.2.3 -> 10203. Android needs a growing integer per release. */
+fun versionCodeOf(v: String): Int {
+    val (major, minor, patch) = (v.split('.').map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 } + listOf(0, 0, 0)).take(3)
+    return major * 10000 + minor * 100 + patch
+}
+
+// Release signing comes from environment variables (CI secrets, or ~/.config/livequill-signing/signing.env locally).
+// Without them the release APK stays unsigned.
+val keystorePath: String? = System.getenv("LIVEQUILL_KEYSTORE")
+
 android {
     namespace = "dev.handnotes"
     compileSdk = 37
@@ -10,13 +22,25 @@ android {
         applicationId = "dev.handnotes"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = versionCodeOf(appVersion)
+        versionName = appVersion
+    }
+
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("LIVEQUILL_STORE_PASSWORD")
+                keyAlias = System.getenv("LIVEQUILL_KEY_ALIAS")
+                keyPassword = System.getenv("LIVEQUILL_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (keystorePath != null) signingConfig = signingConfigs.getByName("release")
         }
     }
 

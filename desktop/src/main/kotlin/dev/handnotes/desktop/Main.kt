@@ -64,7 +64,7 @@ fun main() = application {
     }
     Window(
         onCloseRequest = ::exitApplication,
-        title = "HandNotes",
+        title = "LiveQuill",
         state = rememberWindowState(width = 560.dp, height = 820.dp),
     ) {
         // Compose Desktop runs through XWayland, and KWin honors keep-above there. The flag must be

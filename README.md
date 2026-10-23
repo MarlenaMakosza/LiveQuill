@@ -1,4 +1,4 @@
-# HandNotes
+# LiveQuill
 
 **English** · [Polski](README.pl.md)
 
@@ -21,6 +21,27 @@ The tablet works offline: it stores everything locally and syncs when the server
 - Dark mode on both apps.
 - The desktop follows the tablet view, or you pan and zoom on your own.
 - UI in English, and in Polish when the system language is Polish.
+
+## Download
+
+Ready builds are on the [Releases](https://github.com/MarlenaMakosza/LiveQuill/releases) page:
+
+| File | What to do |
+|---|---|
+| `livequill-<version>.apk` | install on the tablet (see [Tablet](#tablet)) |
+| `livequill-desktop-<version>-linux-x64.tar.gz` | extract, then run `./install-desktop.sh` inside (bundled JRE, no Java needed) |
+| `livequill-server-<version>.tar.gz` | server without Docker: `HANDNOTES_TOKEN=... ./bin/handnotes-server` (Java 17+) |
+| `SHA256SUMS` | checksums: `sha256sum -c SHA256SUMS` |
+
+The server also comes as a Docker image, so you need no build at all:
+
+```bash
+docker run -d --name livequill --restart unless-stopped -p 8787:8787 \
+  -e HANDNOTES_TOKEN=your-secret -v "$PWD/data:/data" \
+  ghcr.io/marlenamakosza/livequill-server:latest
+```
+
+To build from source instead, read on.
 
 ## Requirements
 
@@ -126,7 +147,7 @@ A new APK installs over the old one and keeps notes and settings. The APK is sig
 ./install-desktop.sh
 ```
 
-The script installs to `~/.local/opt/handnotes` and adds HandNotes to the app menu. In **Options**, enter `localhost` (or the server IP) and the token. The settings are stored in `~/.config/handnotes/desktop.properties`.
+The script installs to `~/.local/opt/handnotes` and adds LiveQuill to the app menu. In **Options**, enter `localhost` (or the server IP) and the token. The settings are stored in `~/.config/handnotes/desktop.properties`.
 
 | Action | How |
 |---|---|
@@ -190,8 +211,27 @@ desktop/  Compose Desktop viewer
 docker/   build image (JDK 21 + Android SDK + Gradle)
 ```
 
+## Releasing
+
+Push a version tag. The [Release workflow](.github/workflows/release.yml) builds and signs the APK, packs the desktop app and the server, pushes the server image to GHCR, and publishes a GitHub Release:
+
+```bash
+# set appVersion in gradle.properties first, commit
+git tag v0.3.0
+git push origin v0.3.0
+```
+
+Versions starting with `0.` are marked as pre-releases. Running the workflow by hand (Actions → Release → Run workflow) only builds; the files land in the run artifacts.
+
+The APK signing key comes from repository secrets: `LIVEQUILL_KEYSTORE_BASE64` (the `.jks` file in base64), `LIVEQUILL_STORE_PASSWORD`, `LIVEQUILL_KEY_ALIAS`, `LIVEQUILL_KEY_PASSWORD`. Keep a backup of the keystore: an APK signed with another key does not install over the old one.
+
+To build a signed APK locally, export the same values as `LIVEQUILL_KEYSTORE` (a file path), `LIVEQUILL_STORE_PASSWORD`, `LIVEQUILL_KEY_ALIAS` and `LIVEQUILL_KEY_PASSWORD`, then run `./gradlew :android:assembleRelease`.
+
 ## Ideas
 
 - Lower pen latency with front-buffered rendering (`androidx.graphics`) and `MotionEventPredictor`.
 - Export a board to PDF/SVG, or to `.xopp` for Xournal++.
-- Release signing instead of the debug key.
+
+## License
+
+[MIT](LICENSE)

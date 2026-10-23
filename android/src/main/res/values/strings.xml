@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Default UI language. Polish lives in values-pl and is picked when the system language is Polish. -->
 <resources>
-    <string name="app_name">HandNotes</string>
+    <string name="app_name">LiveQuill</string>
 
     <string name="status_online">● online</string>
     <string name="status_connecting">● connecting…</string>

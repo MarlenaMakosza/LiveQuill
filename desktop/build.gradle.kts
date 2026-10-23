@@ -29,7 +29,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb)
             packageName = "HandNotes"
-            packageVersion = "0.1.0"
+            packageVersion = providers.gradleProperty("appVersion").get()
         }
     }
 }
