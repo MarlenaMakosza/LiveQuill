@@ -21,6 +21,8 @@ Gotowe wersje są na stronie [Releases](https://github.com/MarlenaMakosza/LiveQu
 |---|---|
 | `livequill-<wersja>.apk` | zainstaluj na tablecie (punkt 4) |
 | `livequill-desktop-<wersja>-linux-x64.tar.gz` | rozpakuj i uruchom w środku `./install-desktop.sh` (Java jest w paczce) |
+| `livequill-widget-<wersja>.tar.gz` | widget KDE Plasma: rozpakuj i uruchom `./install-widget.sh --add` |
+| `livequill-<wersja>.plasmoid` | ten sam widget do „Zainstaluj widżet z pliku lokalnego” w Plasmie |
 | `livequill-server-<wersja>.tar.gz` | serwer bez Dockera: `HANDNOTES_TOKEN=... ./bin/handnotes-server` (Java 17+) |
 | `SHA256SUMS` | sumy kontrolne: `sha256sum -c SHA256SUMS` |
 
@@ -193,12 +195,66 @@ Ustawienia leżą w `~/.config/handnotes/desktop.properties`.
 
 Autostart po zalogowaniu: Ustawienia systemowe KDE → Autostart → Dodaj aplikację → LiveQuill.
 
+## 5a. Widget na pulpit KDE
+
+Widget pokazuje na pulpicie tablicę, na której jesteś na tablecie, i odświeża ją na żywo. Plasma ładuje go przy każdym logowaniu, więc notatka wita Cię zaraz po włączeniu komputera. Widget tylko wyświetla, nic w nim nie piszesz.
+
+Wymagania: Plasma 6 i Qt WebSockets. Na Manjaro/Arch:
+
+```bash
+sudo pacman -S --needed qt6-websockets
+```
+
+### Instalacja
+
+Z katalogu repozytorium albo z rozpakowanej paczki `livequill-widget-<wersja>.tar.gz`:
+
+```bash
+./install-widget.sh --add                      # instalacja i dodanie na pulpit
+./install-widget.sh --add 192.168.1.10 TOKEN   # serwer na innym komputerze, token podany wprost
+./install-widget.sh                            # tylko instalacja; dodasz go prawym klikiem → Dodaj widżety
+```
+
+Z `--add` skrypt ustawia serwer (domyślnie `localhost:8787`) i token z `.env`. Widget pojawia się w lewym górnym rogu pulpitu.
+
+Ręczne dodanie (po `./install-widget.sh` bez `--add`, albo z pliku `.plasmoid`):
+1. Prawy klik na pulpicie → **Dodaj lub zarządzaj widżetami**. Plik `.plasmoid` instalujesz w tym panelu przez **Pobierz nowe widżety → Zainstaluj widżet z pliku lokalnego**.
+2. Wyszukaj **LiveQuill** i przeciągnij go na pulpit.
+3. Prawy klik na widgecie → **Konfiguruj LiveQuill** → wpisz adres serwera i token.
+
+**Przesuwanie i rozmiar:** prawy klik na pulpicie → **Tryb edycji**. Wtedy przeciągasz widget, a uchwyty na rogach zmieniają rozmiar. Wyjście: **Gotowe** na górze ekranu.
+
+### Ustawienia
+
+Prawy klik na widgecie → Konfiguruj:
+
+| Ustawienie | Znaczenie |
+|---|---|
+| Adres serwera, Token | jak w aplikacji na PC |
+| Pokazuj | całą tablicę (domyślnie) albo to samo co tablet |
+| Ciemna tablica | ciemne albo jasne tło |
+| Krycie tła | 0 = przezroczyste, 100 = pełne |
+
+### Co pokazuje
+
+- Tablicę, na której jesteś teraz na tablecie. Jeśli tablet nie był jeszcze połączony, pokazuje najnowszą tablicę.
+- „Brak notatek”: połączony, ale tablica jest pusta.
+- W prawym dolnym rogu, gdy coś jest nie tak: `łączę…` / `offline` (serwer nie odpowiada; widget sam próbuje co 1–30 s) albo `zły token` (popraw w Konfiguruj; wartość z `.env`).
+- Gdy nie ma połączenia, widget jest pusty: niczego nie przechowuje lokalnie.
+
+### Aktualizacja i usunięcie
+
+- Aktualizacja: ponownie `./install-widget.sh` (bez `--add`, żeby nie dodać drugiej kopii). Jeśli widget nie pokaże zmian, wyloguj się i zaloguj ponownie.
+- Usunięcie z pulpitu: prawy klik na widgecie → **Usuń**.
+- Odinstalowanie: `kpackagetool6 -t Plasma/Applet -r io.github.marlenamakosza.livequill`.
+
 ## 6. Aktualizacja po zmianach w kodzie
 
 ```bash
 ./build.sh                       # buduje wszystko i kopiuje do dist/
 docker compose up -d --build     # nowy serwer
 ./install-desktop.sh             # nowa aplikacja na PC (zamknij starą przed startem nowej)
+./install-widget.sh              # nowy widget
 # APK zainstaluj na tablecie jak w punkcie 4
 ```
 
@@ -251,6 +307,7 @@ server/   Ktor (CIO), OpStore = log tylko do dopisywania, Hub = rozsyłanie prze
 android/  InkView (rysowanie, gesty), History (cofnij/przywróć), NoteDb (SQLite),
           SyncClient (WebSocket), SyncWorker (WorkManager)
 desktop/  Compose Desktop
+plasmoid/ widget KDE Plasma 6 (QML, tylko podgląd)
 docker/   obraz budujący (JDK 21 + Android SDK + Gradle)
 ```
 
@@ -262,7 +319,7 @@ docker/   obraz budujący (JDK 21 + Android SDK + Gradle)
    git tag v0.4.0
    git push origin v0.4.0
    ```
-3. GitHub Actions ([workflow](.github/workflows/release.yml)) zbuduje i podpisze APK, spakuje aplikację na PC i serwer, wypchnie obraz serwera do GHCR i opublikuje Release. Postęp widać w zakładce Actions.
+3. GitHub Actions ([workflow](.github/workflows/release.yml)) zbuduje i podpisze APK, spakuje aplikację na PC, widget i serwer, wypchnie obraz serwera do GHCR i opublikuje Release. Postęp widać w zakładce Actions.
 
 Wersje zaczynające się od `0.` są oznaczane jako pre-release. Ręczne uruchomienie workflow (Actions → Release → Run workflow) tylko buduje; pliki trafiają do artefaktów uruchomienia.
 
