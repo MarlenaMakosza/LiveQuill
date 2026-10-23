@@ -320,11 +320,11 @@ docker/   obraz budujący (JDK 21 + Android SDK + Gradle)
 
 ## Wydawanie nowej wersji
 
-1. Ustaw `appVersion` w `gradle.properties` (np. `0.4.0`) i zrób commit.
+1. Ustaw `appVersion` w `gradle.properties` (np. `1.1.0`) i zrób commit.
 2. Wypchnij tag:
    ```bash
-   git tag v0.4.0
-   git push origin v0.4.0
+   git tag v1.1.0
+   git push origin v1.1.0
    ```
 3. GitHub Actions ([workflow](.github/workflows/release.yml)) zbuduje i podpisze APK, spakuje aplikację na PC, widget i serwer, wypchnie obraz serwera do GHCR i opublikuje Release. Postęp widać w zakładce Actions.
 
@@ -339,7 +339,7 @@ Klucz do podpisu APK leży w sekretach repozytorium (`LIVEQUILL_KEYSTORE_BASE64`
 
 ## Przejście z HandNotes
 
-Do wersji 0.3.0 projekt nazywał się HandNotes. Nowa nazwa pakietu Androida (`io.github.marlenamakosza.livequill`) oznacza dla Androida nową aplikację:
+Przed wersją 1.0.0 projekt nazywał się HandNotes. Nowa nazwa pakietu Androida (`io.github.marlenamakosza.livequill`) oznacza dla Androida nową aplikację:
 1. Zainstaluj LiveQuill (obok starej HandNotes).
 2. W starej HandNotes sprawdź, czy status to `● online` bez zmian w kolejce.
 3. Odinstaluj HandNotes. W LiveQuill wpisz w ⚙ adres i token; notatki wrócą z serwera.

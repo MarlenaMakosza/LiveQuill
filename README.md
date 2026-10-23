@@ -269,8 +269,8 @@ Push a version tag. The [Release workflow](.github/workflows/release.yml) builds
 
 ```bash
 # set appVersion in gradle.properties first, commit
-git tag v0.3.0
-git push origin v0.3.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 Versions starting with `0.` are marked as pre-releases. Running the workflow by hand (Actions → Release → Run workflow) only builds; the files land in the run artifacts.
@@ -286,7 +286,7 @@ To build a signed APK locally, export the same values as `LIVEQUILL_KEYSTORE` (a
 
 ## Upgrading from HandNotes
 
-The project was called HandNotes before 0.3.0. The new Android package name (`io.github.marlenamakosza.livequill`) makes it a new app: install LiveQuill, then uninstall HandNotes once it shows `online` with no queued changes. Your notes come back from the server.
+The project was called HandNotes before 1.0.0. The new Android package name (`io.github.marlenamakosza.livequill`) makes it a new app: install LiveQuill, then uninstall HandNotes once it shows `online` with no queued changes. Your notes come back from the server.
 
 On the PC, `HANDNOTES_TOKEN` and `HANDNOTES_DATA` still work, and the desktop app reads its old settings from `~/.config/handnotes/` until it saves new ones. The old desktop install in `~/.local/opt/handnotes` can be deleted once LiveQuill runs. With Docker, run `docker compose up -d --build --remove-orphans` once to replace the old `handnotes` container.
 

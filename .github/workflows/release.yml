@@ -1,5 +1,5 @@
 # Builds the Android app, the desktop app and the server.
-# - Push a tag like v0.3.0: publishes a GitHub Release and the server image on GHCR.
+# - Push a tag like v1.0.0: publishes a GitHub Release and the server image on GHCR.
 # - Run manually (Actions -> Release -> Run workflow): builds only, files go to the run artifacts.
 name: Release
 
