@@ -1,14 +1,14 @@
-package dev.handnotes
+package io.github.marlenamakosza.livequill
 
 import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import dev.handnotes.shared.AddPage
-import dev.handnotes.shared.NoteModel
-import dev.handnotes.shared.Op
-import dev.handnotes.shared.SeqOp
-import dev.handnotes.shared.newId
+import io.github.marlenamakosza.livequill.shared.AddPage
+import io.github.marlenamakosza.livequill.shared.NoteModel
+import io.github.marlenamakosza.livequill.shared.Op
+import io.github.marlenamakosza.livequill.shared.SeqOp
+import io.github.marlenamakosza.livequill.shared.newId
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**

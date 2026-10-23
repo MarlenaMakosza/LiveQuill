@@ -1,4 +1,4 @@
-package dev.handnotes.shared
+package io.github.marlenamakosza.livequill.shared
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

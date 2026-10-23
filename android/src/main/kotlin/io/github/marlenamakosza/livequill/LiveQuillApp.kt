@@ -1,8 +1,8 @@
-package dev.handnotes
+package io.github.marlenamakosza.livequill
 
 import android.app.Application
 
-class HandNotesApp : Application() {
+class LiveQuillApp : Application() {
     lateinit var repo: Repo
         private set
     lateinit var sync: SyncClient

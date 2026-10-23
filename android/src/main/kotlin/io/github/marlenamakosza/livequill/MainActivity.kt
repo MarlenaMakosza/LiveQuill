@@ -1,4 +1,4 @@
-package dev.handnotes
+package io.github.marlenamakosza.livequill
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -18,17 +18,17 @@ import android.widget.EditText
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
-import dev.handnotes.shared.AddPage
-import dev.handnotes.shared.AddStroke
-import dev.handnotes.shared.DeletePage
-import dev.handnotes.shared.EraseStroke
-import dev.handnotes.shared.Ink
-import dev.handnotes.shared.Op
-import dev.handnotes.shared.Theme
-import dev.handnotes.shared.newId
+import io.github.marlenamakosza.livequill.shared.AddPage
+import io.github.marlenamakosza.livequill.shared.AddStroke
+import io.github.marlenamakosza.livequill.shared.DeletePage
+import io.github.marlenamakosza.livequill.shared.EraseStroke
+import io.github.marlenamakosza.livequill.shared.Ink
+import io.github.marlenamakosza.livequill.shared.Op
+import io.github.marlenamakosza.livequill.shared.Theme
+import io.github.marlenamakosza.livequill.shared.newId
 
 class MainActivity : Activity() {
-    private val app get() = application as HandNotesApp
+    private val app get() = application as LiveQuillApp
     private val repo get() = app.repo
     private lateinit var ink: InkView
     private lateinit var pageLabel: TextView

@@ -6,7 +6,7 @@
 
     <!-- Cleartext allowed: the server usually runs in the home LAN over ws://. -->
     <application
-        android:name=".HandNotesApp"
+        android:name=".LiveQuillApp"
         android:allowBackup="true"
         android:label="@string/app_name"
         android:icon="@drawable/ic_launcher"

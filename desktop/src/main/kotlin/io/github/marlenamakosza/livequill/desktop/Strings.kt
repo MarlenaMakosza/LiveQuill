@@ -1,4 +1,4 @@
-package dev.handnotes.desktop
+package io.github.marlenamakosza.livequill.desktop
 
 import java.util.Locale
 

@@ -1,4 +1,4 @@
-package dev.handnotes
+package io.github.marlenamakosza.livequill
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -9,14 +9,14 @@ import android.os.Build
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
-import dev.handnotes.shared.AddStroke
-import dev.handnotes.shared.BOARD_DEFAULT_W
-import dev.handnotes.shared.EraseStroke
-import dev.handnotes.shared.Ink
-import dev.handnotes.shared.Msg
-import dev.handnotes.shared.Stroke
-import dev.handnotes.shared.Theme
-import dev.handnotes.shared.newId
+import io.github.marlenamakosza.livequill.shared.AddStroke
+import io.github.marlenamakosza.livequill.shared.BOARD_DEFAULT_W
+import io.github.marlenamakosza.livequill.shared.EraseStroke
+import io.github.marlenamakosza.livequill.shared.Ink
+import io.github.marlenamakosza.livequill.shared.Msg
+import io.github.marlenamakosza.livequill.shared.Stroke
+import io.github.marlenamakosza.livequill.shared.Theme
+import io.github.marlenamakosza.livequill.shared.newId
 import kotlin.math.floor
 import kotlin.math.hypot
 

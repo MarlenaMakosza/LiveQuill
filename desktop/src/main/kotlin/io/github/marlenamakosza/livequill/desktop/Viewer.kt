@@ -1,19 +1,19 @@
-package dev.handnotes.desktop
+package io.github.marlenamakosza.livequill.desktop
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dev.handnotes.shared.AddPage
-import dev.handnotes.shared.AddStroke
-import dev.handnotes.shared.BOARD_DEFAULT_W
-import dev.handnotes.shared.Ink
-import dev.handnotes.shared.DeletePage
-import dev.handnotes.shared.Msg
-import dev.handnotes.shared.NoteModel
-import dev.handnotes.shared.Proto
-import dev.handnotes.shared.ServerAddress
-import dev.handnotes.shared.newId
+import io.github.marlenamakosza.livequill.shared.AddPage
+import io.github.marlenamakosza.livequill.shared.AddStroke
+import io.github.marlenamakosza.livequill.shared.BOARD_DEFAULT_W
+import io.github.marlenamakosza.livequill.shared.Ink
+import io.github.marlenamakosza.livequill.shared.DeletePage
+import io.github.marlenamakosza.livequill.shared.Msg
+import io.github.marlenamakosza.livequill.shared.NoteModel
+import io.github.marlenamakosza.livequill.shared.Proto
+import io.github.marlenamakosza.livequill.shared.ServerAddress
+import io.github.marlenamakosza.livequill.shared.newId
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -27,8 +27,14 @@ import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 
 class Config {
-    private val file = File(System.getProperty("user.home"), ".config/handnotes/desktop.properties")
-    private val p = Properties().apply { if (file.exists()) file.inputStream().use(::load) }
+    private val file = File(System.getProperty("user.home"), ".config/livequill/desktop.properties")
+
+    // Settings from before the rename to LiveQuill, used once when the new file does not exist yet.
+    private val oldFile = File(System.getProperty("user.home"), ".config/handnotes/desktop.properties")
+    private val p = Properties().apply {
+        val src = if (file.exists()) file else oldFile
+        if (src.exists()) src.inputStream().use(::load)
+    }
 
     var serverUrl: String
         get() = p.getProperty("serverUrl", "localhost:8787")
@@ -50,7 +56,7 @@ class Config {
 
     fun save() {
         file.parentFile.mkdirs()
-        file.outputStream().use { p.store(it, "HandNotes desktop") }
+        file.outputStream().use { p.store(it, "LiveQuill desktop") }
     }
 }
 
@@ -120,7 +126,7 @@ class Viewer(val config: Config) {
     var canvasH = 0f
     private val boundsCache = HashMap<String, FloatArray>()
 
-    fun bounds(s: dev.handnotes.shared.Stroke): FloatArray = boundsCache.getOrPut(s.id) { Ink.bounds(s) }
+    fun bounds(s: io.github.marlenamakosza.livequill.shared.Stroke): FloatArray = boundsCache.getOrPut(s.id) { Ink.bounds(s) }
 
     /** View in use now: ox, oy, zoom. Follow mode fits the tablet view into the canvas. */
     fun view(): Triple<Float, Float, Float> {

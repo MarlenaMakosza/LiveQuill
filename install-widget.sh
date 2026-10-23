@@ -26,7 +26,8 @@ fi
 server="${2:-localhost:8787}"
 token="${3:-}"
 if [ -z "$token" ] && [ -f .env ]; then
-    token="$(grep -m1 '^HANDNOTES_TOKEN=' .env | cut -d= -f2-)"
+    # HANDNOTES_TOKEN is the name from before the rename.
+    token="$(grep -m1 -E '^(LIVEQUILL|HANDNOTES)_TOKEN=' .env | cut -d= -f2-)"
 fi
 
 qdbus="$(command -v qdbus6 || command -v qdbus)"

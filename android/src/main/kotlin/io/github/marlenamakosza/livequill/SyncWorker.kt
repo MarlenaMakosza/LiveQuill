@@ -1,4 +1,4 @@
-package dev.handnotes
+package io.github.marlenamakosza.livequill
 
 import android.content.Context
 import androidx.work.BackoffPolicy
@@ -9,10 +9,10 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import dev.handnotes.shared.Msg
-import dev.handnotes.shared.Proto
-import dev.handnotes.shared.PushRequest
-import dev.handnotes.shared.ServerAddress
+import io.github.marlenamakosza.livequill.shared.Msg
+import io.github.marlenamakosza.livequill.shared.Proto
+import io.github.marlenamakosza.livequill.shared.PushRequest
+import io.github.marlenamakosza.livequill.shared.ServerAddress
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
  */
 class SyncWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     override fun doWork(): Result {
-        val repo = (applicationContext as HandNotesApp).repo
+        val repo = (applicationContext as LiveQuillApp).repo
         val url = repo.serverUrl.ifEmpty { return Result.success() }
         val http = OkHttpClient.Builder().connectTimeout(5, TimeUnit.SECONDS).build()
         val endpoint = ServerAddress.http(url) + "/api/push"

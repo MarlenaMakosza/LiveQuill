@@ -1,4 +1,4 @@
-package dev.handnotes.shared
+package io.github.marlenamakosza.livequill.shared
 
 class Page(val id: String, val created: Long) {
     /** Insertion order is drawing order. */

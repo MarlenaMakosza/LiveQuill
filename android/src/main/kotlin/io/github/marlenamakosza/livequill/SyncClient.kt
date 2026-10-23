@@ -1,4 +1,4 @@
-package dev.handnotes
+package io.github.marlenamakosza.livequill
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -6,9 +6,9 @@ import android.net.Network
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
-import dev.handnotes.shared.Msg
-import dev.handnotes.shared.Proto
-import dev.handnotes.shared.ServerAddress
+import io.github.marlenamakosza.livequill.shared.Msg
+import io.github.marlenamakosza.livequill.shared.Proto
+import io.github.marlenamakosza.livequill.shared.ServerAddress
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response

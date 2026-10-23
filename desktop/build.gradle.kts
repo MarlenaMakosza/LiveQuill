@@ -25,10 +25,10 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "dev.handnotes.desktop.MainKt"
+        mainClass = "io.github.marlenamakosza.livequill.desktop.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Deb)
-            packageName = "HandNotes"
+            packageName = "LiveQuill"
             packageVersion = providers.gradleProperty("appVersion").get()
         }
     }

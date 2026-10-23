@@ -25,6 +25,6 @@ dependencies {
 }
 
 application {
-    mainClass.set("dev.handnotes.server.MainKt")
-    applicationName = "handnotes-server"
+    mainClass.set("io.github.marlenamakosza.livequill.server.MainKt")
+    applicationName = "livequill-server"
 }
