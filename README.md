@@ -163,7 +163,11 @@ The script installs to `~/.local/opt/handnotes` and adds LiveQuill to the app me
 
 ## KDE Plasma widget
 
-The widget shows the board the tablet is on, right on the desktop, and updates live while you write. Plasma loads it at every login, so the note greets you as soon as the PC starts. It is read-only and needs Plasma 6 with Qt WebSockets (`qt6-websockets`).
+The widget shows the board the tablet is on, right on the desktop, and updates live while you write. Plasma loads it at every login, so the note greets you as soon as the PC starts. It is read-only.
+
+Requirements: Plasma 6 and Qt WebSockets. On Arch/Manjaro: `sudo pacman -S --needed qt6-websockets`.
+
+From the repository, or from the extracted `livequill-widget-<version>.tar.gz`:
 
 ```bash
 ./install-widget.sh --add                    # install and put it on the desktop
@@ -171,7 +175,16 @@ The widget shows the board the tablet is on, right on the desktop, and updates l
 ./install-widget.sh                          # install only; add it via right click -> Add Widgets
 ```
 
-With `--add`, the script configures the server (`localhost:8787` by default) and the token from `.env`. Right click the widget → Configure for:
+With `--add`, the script configures the server (`localhost:8787` by default) and the token from `.env`. The widget appears in the top-left corner of the desktop.
+
+To add it by hand (after `./install-widget.sh` without `--add`, or from the `.plasmoid` file):
+1. Right click the desktop → **Add or Manage Widgets**. For a `.plasmoid` file, use **Get New Widgets → Install Widget From Local File** in that panel.
+2. Search for **LiveQuill** and drag it onto the desktop.
+3. Right click the widget → **Configure LiveQuill**, then enter the server address and the token.
+
+**Move and resize:** right click the desktop → **Enter Edit Mode**. Drag the widget; the corner handles resize it. Click **Done** at the top to leave.
+
+Right click the widget → Configure for:
 
 | Setting | Meaning |
 |---|---|
@@ -180,7 +193,13 @@ With `--add`, the script configures the server (`localhost:8787` by default) and
 | Dark board | dark or light board |
 | Background opacity | 0 = see-through, 100 = solid |
 
-Running the script again upgrades the widget. To remove it: `kpackagetool6 -t Plasma/Applet -r io.github.marlenamakosza.livequill`.
+What it shows:
+- The board the tablet is on now; before the tablet connects, the newest board.
+- "No notes yet" when connected and the board is empty.
+- Bottom-right, when something is wrong: `connecting…` / `offline` (no server; it retries every 1–30 s), or `bad token` (fix it in Configure; the value is in `.env`).
+- Without a connection it stays empty: it keeps nothing locally.
+
+To upgrade, run `./install-widget.sh` again, without `--add` so you do not get a second copy. If the widget does not pick up the change, log out and back in. To remove it from the desktop: right click → **Remove**. To uninstall: `kpackagetool6 -t Plasma/Applet -r io.github.marlenamakosza.livequill`.
 
 ## Updating
 

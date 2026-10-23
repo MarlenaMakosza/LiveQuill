@@ -197,7 +197,17 @@ Autostart po zalogowaniu: Ustawienia systemowe KDE → Autostart → Dodaj aplik
 
 ## 5a. Widget na pulpit KDE
 
-Widget pokazuje na pulpicie tablicę, na której jesteś na tablecie, i odświeża ją na żywo. Plasma ładuje go przy każdym logowaniu, więc notatka wita Cię zaraz po włączeniu komputera. Widget tylko wyświetla. Potrzebuje Plasmy 6 i Qt WebSockets (`qt6-websockets`).
+Widget pokazuje na pulpicie tablicę, na której jesteś na tablecie, i odświeża ją na żywo. Plasma ładuje go przy każdym logowaniu, więc notatka wita Cię zaraz po włączeniu komputera. Widget tylko wyświetla, nic w nim nie piszesz.
+
+Wymagania: Plasma 6 i Qt WebSockets. Na Manjaro/Arch:
+
+```bash
+sudo pacman -S --needed qt6-websockets
+```
+
+### Instalacja
+
+Z katalogu repozytorium albo z rozpakowanej paczki `livequill-widget-<wersja>.tar.gz`:
 
 ```bash
 ./install-widget.sh --add                      # instalacja i dodanie na pulpit
@@ -205,7 +215,18 @@ Widget pokazuje na pulpicie tablicę, na której jesteś na tablecie, i odświe�
 ./install-widget.sh                            # tylko instalacja; dodasz go prawym klikiem → Dodaj widżety
 ```
 
-Z `--add` skrypt ustawia serwer (domyślnie `localhost:8787`) i token z `.env`. Prawy klik na widgecie → Konfiguruj:
+Z `--add` skrypt ustawia serwer (domyślnie `localhost:8787`) i token z `.env`. Widget pojawia się w lewym górnym rogu pulpitu.
+
+Ręczne dodanie (po `./install-widget.sh` bez `--add`, albo z pliku `.plasmoid`):
+1. Prawy klik na pulpicie → **Dodaj lub zarządzaj widżetami**. Plik `.plasmoid` instalujesz w tym panelu przez **Pobierz nowe widżety → Zainstaluj widżet z pliku lokalnego**.
+2. Wyszukaj **LiveQuill** i przeciągnij go na pulpit.
+3. Prawy klik na widgecie → **Konfiguruj LiveQuill** → wpisz adres serwera i token.
+
+**Przesuwanie i rozmiar:** prawy klik na pulpicie → **Tryb edycji**. Wtedy przeciągasz widget, a uchwyty na rogach zmieniają rozmiar. Wyjście: **Gotowe** na górze ekranu.
+
+### Ustawienia
+
+Prawy klik na widgecie → Konfiguruj:
 
 | Ustawienie | Znaczenie |
 |---|---|
@@ -214,7 +235,18 @@ Z `--add` skrypt ustawia serwer (domyślnie `localhost:8787`) i token z `.env`. 
 | Ciemna tablica | ciemne albo jasne tło |
 | Krycie tła | 0 = przezroczyste, 100 = pełne |
 
-Ponowne uruchomienie skryptu aktualizuje widget. Usunięcie: `kpackagetool6 -t Plasma/Applet -r io.github.marlenamakosza.livequill`.
+### Co pokazuje
+
+- Tablicę, na której jesteś teraz na tablecie. Jeśli tablet nie był jeszcze połączony, pokazuje najnowszą tablicę.
+- „Brak notatek”: połączony, ale tablica jest pusta.
+- W prawym dolnym rogu, gdy coś jest nie tak: `łączę…` / `offline` (serwer nie odpowiada; widget sam próbuje co 1–30 s) albo `zły token` (popraw w Konfiguruj; wartość z `.env`).
+- Gdy nie ma połączenia, widget jest pusty: niczego nie przechowuje lokalnie.
+
+### Aktualizacja i usunięcie
+
+- Aktualizacja: ponownie `./install-widget.sh` (bez `--add`, żeby nie dodać drugiej kopii). Jeśli widget nie pokaże zmian, wyloguj się i zaloguj ponownie.
+- Usunięcie z pulpitu: prawy klik na widgecie → **Usuń**.
+- Odinstalowanie: `kpackagetool6 -t Plasma/Applet -r io.github.marlenamakosza.livequill`.
 
 ## 6. Aktualizacja po zmianach w kodzie
 
