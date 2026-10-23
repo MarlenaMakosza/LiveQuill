@@ -10,6 +10,8 @@
     <string name="new_board">+ tablica</string>
     <string name="fit_all">⌖ Wszystko</string>
     <string name="width">Grubość %1$d</string>
+    <string name="input_pen">✎ Pióro</string>
+    <string name="input_finger">☝ Palec</string>
     <string name="eraser">Gumka</string>
     <string name="lasso">Lasso</string>
     <string name="undo">↶ Cofnij</string>
@@ -31,6 +33,5 @@
     <string name="settings">Ustawienia</string>
     <string name="server_address">Adres serwera</string>
     <string name="token">Token</string>
-    <string name="finger_draw">Rysuj też palcem</string>
     <string name="device_id">ID urządzenia: %1$s</string>
 </resources>
