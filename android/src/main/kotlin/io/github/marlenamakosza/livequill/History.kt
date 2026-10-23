@@ -11,10 +11,12 @@ import io.github.marlenamakosza.livequill.shared.newId
  * new id. Every step syncs like any other change.
  */
 class History(private val repo: Repo) {
-    sealed class Action(var strokes: List<Stroke>) {
-        class Add(strokes: List<Stroke>) : Action(strokes)
-        class Erase(strokes: List<Stroke>) : Action(strokes)
-    }
+    /**
+     * One undo step: [removed] strokes went away and [added] strokes came in.
+     * A new stroke has only [added], an eraser pass only [removed], a move has both.
+     * The lists are updated on every undo/redo, because restored strokes get new ids.
+     */
+    class Action(var removed: List<Stroke>, var added: List<Stroke>)
 
     private class Stacks {
         val undo = ArrayDeque<Action>()
@@ -35,10 +37,8 @@ class History(private val repo: Repo) {
     fun undo(pageId: String): Boolean {
         val s = stacks(pageId)
         val a = s.undo.removeLastOrNull() ?: return undoOlder(pageId, s)
-        when (a) {
-            is Action.Add -> erase(a.strokes)
-            is Action.Erase -> a.strokes = restore(a.strokes)
-        }
+        erase(a.added)
+        a.removed = restore(a.removed)
         s.redo.addLast(a)
         return true
     }
@@ -46,10 +46,8 @@ class History(private val repo: Repo) {
     fun redo(pageId: String): Boolean {
         val s = stacks(pageId)
         val a = s.redo.removeLastOrNull() ?: return false
-        when (a) {
-            is Action.Add -> a.strokes = restore(a.strokes)
-            is Action.Erase -> erase(a.strokes)
-        }
+        erase(a.removed)
+        a.added = restore(a.added)
         s.undo.addLast(a)
         return true
     }
@@ -58,7 +56,7 @@ class History(private val repo: Repo) {
     private fun undoOlder(pageId: String, s: Stacks): Boolean {
         val last = repo.model.page(pageId)?.strokes?.values?.lastOrNull { it.deviceId == repo.deviceId } ?: return false
         erase(listOf(last))
-        s.redo.addLast(Action.Add(listOf(last)))
+        s.redo.addLast(Action(removed = emptyList(), added = listOf(last)))
         return true
     }
 
