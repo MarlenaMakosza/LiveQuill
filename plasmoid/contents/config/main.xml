@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+    <kcfgfile name=""/>
+    <group name="General">
+        <entry name="serverUrl" type="String">
+            <default>localhost:8787</default>
+        </entry>
+        <entry name="token" type="String">
+            <default></default>
+        </entry>
+        <!-- "fit": the whole board the tablet shows; "tablet": the same area the tablet shows -->
+        <entry name="viewMode" type="String">
+            <default>fit</default>
+        </entry>
+        <entry name="dark" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="backgroundOpacity" type="Int">
+            <default>85</default>
+            <min>0</min>
+            <max>100</max>
+        </entry>
+    </group>
+</kcfg>

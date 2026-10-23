@@ -79,6 +79,15 @@ jobs:
           cp LICENSE "$RUNNER_TEMP/$s/"
           tar -C "$RUNNER_TEMP" -czf "$out/$s.tar.gz" "$s"
 
+          w="livequill-widget-$VERSION"
+          mkdir -p "$RUNNER_TEMP/$w"
+          cp -r plasmoid "$RUNNER_TEMP/$w/widget"
+          sed -i "s/\"Version\": \"[^\"]*\"/\"Version\": \"$VERSION\"/" "$RUNNER_TEMP/$w/widget/metadata.json"
+          cp install-widget.sh LICENSE "$RUNNER_TEMP/$w/"
+          tar -C "$RUNNER_TEMP" -czf "$out/$w.tar.gz" "$w"
+          # The same widget as a .plasmoid file, for "Install Widget From Local File" in Plasma.
+          (cd "$RUNNER_TEMP/$w/widget" && zip -qr "$out/livequill-$VERSION.plasmoid" .)
+
           (cd "$out" && sha256sum * > SHA256SUMS)
           ls -la "$out"
           echo "OUT=$out" >> "$GITHUB_ENV"

@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Marlena Mąkosza"
+            }
+        ],
+        "Category": "Utilities",
+        "Description": "Shows a LiveQuill board on the desktop and updates it live as you write on the tablet",
+        "Description[pl]": "Pokazuje tablicę LiveQuill na pulpicie i odświeża ją na żywo, gdy piszesz na tablecie",
+        "Icon": "draw-freehand",
+        "Id": "io.github.marlenamakosza.livequill",
+        "License": "MIT",
+        "Name": "LiveQuill",
+        "Version": "0.3.0",
+        "Website": "https://github.com/MarlenaMakosza/LiveQuill"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

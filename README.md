@@ -20,6 +20,7 @@ The tablet works offline: it stores everything locally and syncs when the server
 - Undo and redo (two-finger tap and three-finger tap), eraser, 4 colors, 4 widths.
 - Dark mode on both apps.
 - The desktop follows the tablet view, or you pan and zoom on your own.
+- KDE Plasma widget: the current board on the desktop, live, right after login.
 - UI in English, and in Polish when the system language is Polish.
 
 ## Download
@@ -30,6 +31,8 @@ Ready builds are on the [Releases](https://github.com/MarlenaMakosza/LiveQuill/r
 |---|---|
 | `livequill-<version>.apk` | install on the tablet (see [Tablet](#tablet)) |
 | `livequill-desktop-<version>-linux-x64.tar.gz` | extract, then run `./install-desktop.sh` inside (bundled JRE, no Java needed) |
+| `livequill-widget-<version>.tar.gz` | KDE Plasma widget: extract, then run `./install-widget.sh --add` |
+| `livequill-<version>.plasmoid` | the same widget for Plasma's "Install Widget From Local File" |
 | `livequill-server-<version>.tar.gz` | server without Docker: `HANDNOTES_TOKEN=... ./bin/handnotes-server` (Java 17+) |
 | `SHA256SUMS` | checksums: `sha256sum -c SHA256SUMS` |
 
@@ -158,12 +161,34 @@ The script installs to `~/.local/opt/handnotes` and adds LiveQuill to the app me
 | Whole board | "Fit all" |
 | Dark / light | "Dark" / "Light" |
 
+## KDE Plasma widget
+
+The widget shows the board the tablet is on, right on the desktop, and updates live while you write. Plasma loads it at every login, so the note greets you as soon as the PC starts. It is read-only and needs Plasma 6 with Qt WebSockets (`qt6-websockets`).
+
+```bash
+./install-widget.sh --add                    # install and put it on the desktop
+./install-widget.sh --add 192.168.1.10 TOKEN # server elsewhere, explicit token
+./install-widget.sh                          # install only; add it via right click -> Add Widgets
+```
+
+With `--add`, the script configures the server (`localhost:8787` by default) and the token from `.env`. Right click the widget → Configure for:
+
+| Setting | Meaning |
+|---|---|
+| Server address, Token | as in the desktop app |
+| Show | the whole board (default), or the same area as the tablet |
+| Dark board | dark or light board |
+| Background opacity | 0 = see-through, 100 = solid |
+
+Running the script again upgrades the widget. To remove it: `kpackagetool6 -t Plasma/Applet -r io.github.marlenamakosza.livequill`.
+
 ## Updating
 
 ```bash
 ./build.sh
 docker compose up -d --build
 ./install-desktop.sh      # close the running desktop app first
+./install-widget.sh       # upgrade the Plasma widget
 # then install dist/handnotes.apk on the tablet
 ```
 
@@ -208,12 +233,13 @@ server/   Ktor (CIO); OpStore = append-only log, Hub = WebSocket fan-out
 android/  InkView (drawing, gestures), History (undo/redo), NoteDb (SQLite),
           SyncClient (WebSocket), SyncWorker (WorkManager)
 desktop/  Compose Desktop viewer
+plasmoid/ KDE Plasma 6 widget (QML, read-only viewer)
 docker/   build image (JDK 21 + Android SDK + Gradle)
 ```
 
 ## Releasing
 
-Push a version tag. The [Release workflow](.github/workflows/release.yml) builds and signs the APK, packs the desktop app and the server, pushes the server image to GHCR, and publishes a GitHub Release:
+Push a version tag. The [Release workflow](.github/workflows/release.yml) builds and signs the APK, packs the desktop app, the widget and the server, pushes the server image to GHCR, and publishes a GitHub Release:
 
 ```bash
 # set appVersion in gradle.properties first, commit

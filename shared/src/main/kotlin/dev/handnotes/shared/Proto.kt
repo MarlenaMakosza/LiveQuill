@@ -169,7 +169,9 @@ object Ink {
         val g = (argb shr 8) and 0xFF
         val b = argb and 0xFF
         val luma = (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255f
-        if (luma < 0.2f) return (argb and 0xFF000000.toInt()) or 0xE8E8E8
+        val chroma = maxOf(r, g, b) - minOf(r, g, b)
+        // Only dark, grayish ink (black, graphite) turns light; a dark red stays red.
+        if (luma < 0.2f && chroma < 60) return (argb and 0xFF000000.toInt()) or 0xE8E8E8
         fun lift(c: Int) = c + ((255 - c) * 0.3f).toInt()
         return (argb and 0xFF000000.toInt()) or (lift(r) shl 16) or (lift(g) shl 8) or lift(b)
     }
