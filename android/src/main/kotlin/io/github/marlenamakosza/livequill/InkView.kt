@@ -24,7 +24,8 @@ import kotlin.math.hypot
 
 /**
  * Infinite board. The stylus draws, erases or selects with a lasso; fingers pan (one or two) and
- * zoom (two). A lasso selection moves when dragged with the pen.
+ * zoom (two). In finger mode ([fingerDraw]) one finger works like the pen and two fingers pan and
+ * zoom. A lasso selection moves when dragged with the pen.
  *
  * The visible area renders into a bitmap. New pen segments go straight into it. During a pan or
  * zoom the bitmap is drawn transformed, and a full render happens at most every [RERENDER_MS]
@@ -98,6 +99,7 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
     // Stroke in progress, world units.
     private var activePointer = -1
     private var strokeTool = 0
+    private var strokeDownTime = 0L
     private enum class Pen { DRAW, ERASE, LASSO, MOVE }
     private var pen = Pen.DRAW
     private var strokeId = ""
@@ -358,9 +360,18 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
         }
         if (tool != MotionEvent.TOOL_TYPE_FINGER) return
         if (activePointer != -1 && strokeTool != MotionEvent.TOOL_TYPE_FINGER) return // Palm while the stylus writes.
+        if (isPalmSized(e, i)) {
+            palms += id
+            return
+        }
+        if (activePointer != -1 && !strokeIsYoung(e)) {
+            // A finger stroke is well under way: another contact is the resting hand, not a gesture.
+            palms += id
+            return
+        }
         trackTapDown(e, id, x, y)
         if (activePointer != -1) {
-            // Second finger: the first one was not drawing, it was the start of a pan or zoom.
+            // Second finger early in a finger stroke: it was the start of a pan, zoom or tap.
             val j = e.findPointerIndex(activePointer)
             val first = activePointer
             render() // Drops the half-drawn stroke from the bitmap.
@@ -388,6 +399,7 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
         if (cox != ox || coy != oy || cz != z) render()
         activePointer = id
         strokeTool = tool
+        strokeDownTime = e.eventTime
         if (Build.VERSION.SDK_INT >= 30) requestUnbufferedDispatch(e)
         val x = e.getX(i)
         val y = e.getY(i)
@@ -559,8 +571,26 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
     }
 
     private fun pressure(e: MotionEvent, i: Int, h: Int): Float {
+        // Fingers report no usable pressure (often a constant or the contact size): use a fixed one.
+        if (e.getToolType(i) == MotionEvent.TOOL_TYPE_FINGER) return FINGER_PRESSURE
         val p = if (h < 0) e.getPressure(i) else e.getHistoricalPressure(i, h)
         return p.coerceIn(0f, 1f)
+    }
+
+    /** A contact much wider than a fingertip: the side of the hand or the palm. */
+    private fun isPalmSized(e: MotionEvent, i: Int): Boolean {
+        val major = e.getTouchMajor(i)
+        if (major <= 0f) return false // Not reported by this device.
+        return major > PALM_MM / 25.4f * resources.displayMetrics.xdpi
+    }
+
+    /** A finger stroke that just started and barely moved can still turn into a gesture. */
+    private fun strokeIsYoung(e: MotionEvent): Boolean {
+        if (e.eventTime - strokeDownTime < HANDOFF_MS) return true
+        if (n < 2) return true
+        val dx = (pts[(n - 1) * 3] - pts[0]) * z
+        val dy = (pts[(n - 1) * 3 + 1] - pts[1]) * z
+        return hypot(dx, dy) < HANDOFF_SLOP_DP * density
     }
 
     private fun begin(x: Float, y: Float, p: Float) {
@@ -572,8 +602,13 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
     }
 
     private fun add(sxv: Float, syv: Float, p: Float) {
-        val x = wx(sxv)
-        val y = wy(syv)
+        var x = wx(sxv)
+        var y = wy(syv)
+        if (n > 0 && strokeTool == MotionEvent.TOOL_TYPE_FINGER) {
+            // Finger input jitters more than a stylus: pull each point a bit towards the previous one.
+            x = pts[(n - 1) * 3] + (x - pts[(n - 1) * 3]) * FINGER_SMOOTHING
+            y = pts[(n - 1) * 3 + 1] + (y - pts[(n - 1) * 3 + 1]) * FINGER_SMOOTHING
+        }
         if (n > 0) {
             val dx = (x - pts[(n - 1) * 3]) * z
             val dy = (y - pts[(n - 1) * 3 + 1]) * z
@@ -835,6 +870,13 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
         const val RERENDER_MS = 120L
         const val TAP_MS = 350L
         const val TAP_SLOP_DP = 20f
+        const val FINGER_PRESSURE = 0.55f
+        const val FINGER_SMOOTHING = 0.6f
+        /** Contacts wider than this are a palm. A fingertip is about 8–12 mm. */
+        const val PALM_MM = 22f
+        /** A second finger within this time or distance of a finger stroke's start makes it a gesture. */
+        const val HANDOFF_MS = 250L
+        const val HANDOFF_SLOP_DP = 24f
         const val SELECTION_COLOR = 0xFF4C8BF5.toInt()
     }
 }

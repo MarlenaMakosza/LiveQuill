@@ -2,7 +2,7 @@
 
 [English](README.md) · **Polski**
 
-Odręczny notatnik. Piszesz rysikiem na tablecie z Androidem (z naciskiem), serwer przechowuje wszystko, a okno na komputerze z Linuksem pokazuje notatki na żywo. Okno można przypiąć nad innymi aplikacjami.
+Odręczny notatnik. Piszesz rysikiem (z naciskiem) albo palcem na tablecie z Androidem, serwer przechowuje wszystko, a okno na komputerze z Linuksem pokazuje notatki na żywo. Okno można przypiąć nad innymi aplikacjami.
 
 ```
 [tablet Android] --WebSocket--> [serwer :8787] --WebSocket--> [okno na PC]
@@ -38,7 +38,7 @@ Jeśli korzystasz z gotowych plików, pomiń punkty 1–2 (i budowanie w punkcie
 
 ## 1. Wymagania (raz)
 
-Na tablecie: Android 8.0+ i **aktywny rysik**. W wersji 1.0 nie da się pisać palcem (szczegóły w punkcie 4).
+Na tablecie: Android 8.0+. Najlepiej z aktywnym rysikiem; bez niego działa tryb palca (od wersji 1.1, szczegóły w punkcie 4).
 
 Na komputerze potrzebujesz tylko Dockera i rsync. Javy, Gradle'a ani Android SDK nie instalujesz: są w obrazie Dockera.
 
@@ -116,7 +116,7 @@ Jeśli masz włączony firewall, otwórz port: `sudo ufw allow 8787/tcp` albo `s
 
 ## 4. Tablet
 
-**Wymagany tablet z Androidem 8.0 lub nowszym i aktywnym rysikiem** (S Pen, USI, Wacom EMR i podobne). W wersji 1.0 piszesz tylko rysikiem; palce przesuwają, zoomują i robią tap cofnij/przywróć. Pisanie palcem jest planowane na wersję 1.1 ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
+Potrzebny tablet z Androidem 8.0 lub nowszym. Aktywny rysik (S Pen, USI, Wacom EMR i podobne) daje nacisk i najlepsze odrzucanie dłoni. Bez rysika włącz tryb palca guzikiem „☝ Palec” (od wersji 1.1; w 1.0 rysik jest wymagany).
 
 ### Instalacja APK
 
@@ -155,8 +155,9 @@ Na pasku status powinien zmienić się na zielone `● online`.
 
 | Akcja | Jak |
 |---|---|
-| Pisanie | rysik (palec i dłoń są ignorowane) |
-| Przesuwanie tablicy | 1 palec |
+| Pisanie | rysik; w trybie palca także 1 palec |
+| Tryb pióro / palec | guzik „✎ Pióro” / „☝ Palec” (pokazuje aktualny tryb) |
+| Przesuwanie tablicy | 1 palec (tryb pióra), 2 palce (tryb palca) |
 | Przesuwanie i zoom | 2 palce |
 | Cofnij | tap dwoma palcami albo „↶ Cofnij” |
 | Przywróć | tap trzema palcami albo „↷ Ponów” |
@@ -170,7 +171,7 @@ Na pasku status powinien zmienić się na zielone `● online`.
 - Każda tablica jest nieskończona i pamięta, gdzie ją ostatnio oglądałaś.
 - Lasso zaznacza kreski, których większość punktów leży w obrysie. Dotknięcie poza ramką zdejmuje zaznaczenie, a w trybie lasso od razu zaczyna nowy obrys. Przesunięcie to jeden krok cofania.
 - Cofanie działa osobno dla każdej tablicy (kreski, gumka, przesunięcia) i pamięta 200 kroków w bieżącej sesji. Po restarcie aplikacji „Cofnij” usuwa najnowszą własną kreskę.
-- W ⚙ jest eksperymentalny przełącznik „Rysuj też palcem” (1 palec rysuje, 2 przesuwają). W wersji 1.0 nie jest obsługiwany; porządne pisanie palcem jest planowane na 1.1 ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
+- **Tryb palca:** 1 palec pisze stałą grubością (palec nie podaje nacisku), z lekkim wygładzaniem. Przesuwasz wtedy 2 palcami. Drugi palec w pierwszych 250 ms albo 24 dp kreski zamienia ją w przesuwanie, zoom albo tap cofnij/przywróć. Późniejsze dotknięcia oraz każde szersze niż ok. 22 mm są traktowane jak opierająca się dłoń i ignorowane. Rysik pisze w obu trybach.
 - Jeśli tap trzema palcami robi zrzut ekranu, wyłącz w ustawieniach Androida gest zrzutu ekranu trzema palcami.
 
 Status na pasku:
@@ -339,7 +340,7 @@ Klucz do podpisu APK leży w sekretach repozytorium (`LIVEQUILL_KEYSTORE_BASE64`
 ## Plany
 
 **Wersja 1.1**
-- Pisanie bez rysika: palec jako pełnoprawny tryb, z działającym przesuwaniem, zoomem i tapem cofnij/przywróć ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
+- Pisanie bez rysika: tryb palca z guzikiem na pasku, działającym przesuwaniem, zoomem i tapem cofnij/przywróć ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
 
 **Pomysły na później**
 

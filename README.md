@@ -2,7 +2,7 @@
 
 **English** · [Polski](README.pl.md)
 
-Handwritten notes on an Android tablet, mirrored live to a Linux desktop. You write with a pressure-sensitive stylus on an infinite board. A small self-hosted server stores every stroke. A desktop window shows the board as you write, and it can stay pinned above other windows.
+Handwritten notes on an Android tablet, mirrored live to a Linux desktop. You write with a pressure-sensitive stylus, or with a finger, on an infinite board. A small self-hosted server stores every stroke. A desktop window shows the board as you write, and it can stay pinned above other windows.
 
 ```
 [Android tablet] --WebSocket--> [server :8787] --WebSocket--> [desktop viewer]
@@ -14,6 +14,7 @@ The tablet works offline: it stores everything locally and syncs when the server
 ## Features
 
 - Pressure-sensitive stylus input with palm rejection. Fingers pan and zoom.
+- Finger mode for tablets without a stylus: one finger writes, two fingers pan and zoom.
 - Infinite boards. Each board remembers its last view.
 - Live mirroring: strokes appear on the desktop while you write.
 - Offline-first sync. Changes queue on the tablet and go out on reconnect, also from the background via WorkManager.
@@ -49,7 +50,7 @@ To build from source instead, read on.
 ## Requirements
 
 - Docker with the compose plugin, and rsync. JDK, Gradle and the Android SDK run inside a build image; you do not install them.
-- An Android 8.0 (API 26) or newer tablet **with an active stylus** (S Pen, USI, Wacom EMR and similar). In 1.0 you write with the stylus only; fingers pan, zoom and tap for undo/redo. Drawing with a finger is planned for 1.1 ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
+- An Android 8.0 (API 26) or newer tablet. An active stylus (S Pen, USI, Wacom EMR and similar) gives pressure and the best palm rejection. Without one, use finger mode (from 1.1; in 1.0 a stylus is required).
 - Linux desktop for the viewer. Pinning was tested on KDE Plasma (Wayland via XWayland).
 - About 3 GB of disk for the build image, the Gradle cache and the output.
 
@@ -128,8 +129,9 @@ Android refuses an update signed with another key ("conflicts with an existing p
 
 | Action | How |
 |---|---|
-| Write | stylus (fingers and palm are ignored) |
-| Pan | one finger |
+| Write | stylus; in finger mode also one finger |
+| Pen / finger mode | "✎ Pen" / "☝ Finger" button (shows the current mode) |
+| Pan | one finger (pen mode), two fingers (finger mode) |
 | Pan and zoom | two fingers |
 | Undo | two-finger tap, or "↶ Undo" |
 | Redo | three-finger tap, or "↷ Redo" |
@@ -141,7 +143,7 @@ Android refuses an update signed with another key ("conflicts with an existing p
 
 - Lasso picks the strokes with most of their points inside the loop. Touching outside the frame drops the selection; in lasso mode it also starts a new loop. A move is one undo step.
 - Undo is per board. It covers strokes, eraser passes and moves, up to 200 steps in the current session. After a restart, undo removes your newest stroke.
-- ⚙ has an experimental "Draw with finger too" switch (one finger draws, two pan). It is not supported in 1.0; proper finger input is planned for 1.1 ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
+- **Finger mode:** one finger writes with a fixed width (fingers report no pressure) and light smoothing. A second finger within the first 250 ms or 24 dp of a stroke turns it into a pan, a zoom or an undo/redo tap. Later contacts, and any contact wider than about 22 mm, count as the resting hand and are ignored. The stylus keeps drawing in both modes.
 - If a three-finger tap takes a screenshot instead, turn off the three-finger screenshot gesture in the Android settings.
 
 | Status | Meaning |
@@ -282,7 +284,7 @@ To build a signed APK locally, export the same values as `LIVEQUILL_KEYSTORE` (a
 ## Roadmap
 
 **1.1**
-- Drawing without a stylus: finger input as a real mode, with working pan/zoom and undo/redo taps ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
+- Drawing without a stylus: finger mode with a toolbar switch, working pan/zoom and undo/redo taps ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
 
 **Later ideas**
 

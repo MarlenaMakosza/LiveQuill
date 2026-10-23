@@ -13,7 +13,6 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.WindowManager
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
@@ -35,6 +34,7 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var eraserBtn: Button
     private lateinit var lassoBtn: Button
+    private lateinit var inputBtn: Button
     private lateinit var widthBtn: Button
     private val history get() = app.history
     private val renderNow = Runnable { ink.render() }
@@ -106,6 +106,8 @@ class MainActivity : Activity() {
         bar.addView(gap())
         widthBtn = button("") { cycleWidth() }
         bar.addView(widthBtn)
+        inputBtn = button("") { setFingerMode(!ink.fingerDraw) }
+        bar.addView(inputBtn)
         eraserBtn = button(getString(R.string.eraser)) { setTool(eraser = !ink.eraserMode, lasso = false) }
         bar.addView(eraserBtn)
         lassoBtn = button(getString(R.string.lasso)) { setTool(eraser = false, lasso = !ink.lassoMode) }
@@ -138,6 +140,7 @@ class MainActivity : Activity() {
         setContentView(root)
 
         selectColor(0)
+        setFingerMode(repo.fingerDraw)
         updateWidthLabel()
         ensurePage()
         if (repo.serverUrl.isEmpty()) settings()
@@ -231,6 +234,16 @@ class MainActivity : Activity() {
             .show()
     }
 
+    /**
+     * Pen mode: only the stylus draws, fingers pan and zoom. Finger mode: one finger draws too,
+     * two fingers pan and zoom. The stylus draws in both. The button shows the current mode.
+     */
+    private fun setFingerMode(on: Boolean) {
+        ink.fingerDraw = on
+        repo.fingerDraw = on
+        inputBtn.text = getString(if (on) R.string.input_finger else R.string.input_pen)
+    }
+
     /** Eraser and lasso exclude each other; with both off, the pen draws. */
     private fun setTool(eraser: Boolean, lasso: Boolean) {
         ink.eraserMode = eraser
@@ -270,10 +283,6 @@ class MainActivity : Activity() {
             setText(repo.token)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
         }
-        val finger = CheckBox(this).apply {
-            text = getString(R.string.finger_draw)
-            isChecked = repo.fingerDraw
-        }
         val form = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(8), dp(20), 0)
@@ -281,7 +290,6 @@ class MainActivity : Activity() {
             addView(url)
             addView(label(getString(R.string.token)))
             addView(token)
-            addView(finger)
             addView(label(getString(R.string.device_id, repo.deviceId.take(8))))
         }
         AlertDialog.Builder(this)
@@ -290,8 +298,6 @@ class MainActivity : Activity() {
             .setPositiveButton(R.string.save) { _, _ ->
                 repo.serverUrl = url.text.toString()
                 repo.token = token.text.toString()
-                repo.fingerDraw = finger.isChecked
-                ink.fingerDraw = finger.isChecked
                 app.sync.restart()
             }
             .setNegativeButton(R.string.cancel, null)
