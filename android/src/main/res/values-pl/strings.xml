@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="status_online">● online</string>
+    <string name="status_connecting">● łączę…</string>
+    <string name="status_offline">● offline</string>
+    <string name="status_no_server">● brak serwera</string>
+    <string name="status_bad_token">● zły token</string>
+    <string name="status_pending">%1$s · %2$d w kolejce</string>
+
+    <string name="new_board">+ tablica</string>
+    <string name="fit_all">⌖ Wszystko</string>
+    <string name="width">Grubość %1$d</string>
+    <string name="eraser">Gumka</string>
+    <string name="undo">↶ Cofnij</string>
+    <string name="redo">↷ Ponów</string>
+    <string name="light_mode">☀ Jasny</string>
+    <string name="dark_mode">☾ Ciemny</string>
+    <string name="delete_board">Usuń tablicę</string>
+
+    <string name="undone">↶ Cofnięto</string>
+    <string name="nothing_to_undo">Nic do cofnięcia</string>
+    <string name="redone">↷ Przywrócono</string>
+    <string name="nothing_to_redo">Nic do przywrócenia</string>
+
+    <string name="delete_board_confirm">Usunąć tę tablicę na wszystkich urządzeniach?</string>
+    <string name="delete">Usuń</string>
+    <string name="cancel">Anuluj</string>
+    <string name="save">Zapisz</string>
+
+    <string name="settings">Ustawienia</string>
+    <string name="server_address">Adres serwera</string>
+    <string name="token">Token</string>
+    <string name="finger_draw">Rysuj też palcem</string>
+    <string name="device_id">ID urządzenia: %1$s</string>
+</resources>
