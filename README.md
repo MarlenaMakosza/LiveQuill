@@ -271,8 +271,8 @@ Push a version tag. The [Release workflow](.github/workflows/release.yml) builds
 
 ```bash
 # set appVersion in gradle.properties first, commit
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.2.0
+git push origin v1.2.0
 ```
 
 Versions starting with `0.` are marked as pre-releases. Running the workflow by hand (Actions → Release → Run workflow) only builds; the files land in the run artifacts.
