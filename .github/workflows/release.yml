@@ -69,13 +69,13 @@ jobs:
 
           d="livequill-desktop-$VERSION"
           mkdir -p "$RUNNER_TEMP/$d"
-          cp -r desktop/build/compose/binaries/main/app/HandNotes "$RUNNER_TEMP/$d/desktop"
+          cp -r desktop/build/compose/binaries/main/app/LiveQuill "$RUNNER_TEMP/$d/desktop"
           cp install-desktop.sh README.md README.pl.md LICENSE "$RUNNER_TEMP/$d/"
           tar -C "$RUNNER_TEMP" -czf "$out/$d-linux-x64.tar.gz" "$d"
 
           s="livequill-server-$VERSION"
           mkdir -p "$RUNNER_TEMP/$s"
-          cp -r server/build/install/handnotes-server/. "$RUNNER_TEMP/$s/"
+          cp -r server/build/install/livequill-server/. "$RUNNER_TEMP/$s/"
           cp LICENSE "$RUNNER_TEMP/$s/"
           tar -C "$RUNNER_TEMP" -czf "$out/$s.tar.gz" "$s"
 

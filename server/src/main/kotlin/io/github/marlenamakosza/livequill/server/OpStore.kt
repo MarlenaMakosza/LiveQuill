@@ -1,8 +1,8 @@
-package dev.handnotes.server
+package io.github.marlenamakosza.livequill.server
 
-import dev.handnotes.shared.Op
-import dev.handnotes.shared.Proto
-import dev.handnotes.shared.SeqOp
+import io.github.marlenamakosza.livequill.shared.Op
+import io.github.marlenamakosza.livequill.shared.Proto
+import io.github.marlenamakosza.livequill.shared.SeqOp
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 import java.io.File

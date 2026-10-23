@@ -23,14 +23,14 @@ Gotowe wersje są na stronie [Releases](https://github.com/MarlenaMakosza/LiveQu
 | `livequill-desktop-<wersja>-linux-x64.tar.gz` | rozpakuj i uruchom w środku `./install-desktop.sh` (Java jest w paczce) |
 | `livequill-widget-<wersja>.tar.gz` | widget KDE Plasma: rozpakuj i uruchom `./install-widget.sh --add` |
 | `livequill-<wersja>.plasmoid` | ten sam widget do „Zainstaluj widżet z pliku lokalnego” w Plasmie |
-| `livequill-server-<wersja>.tar.gz` | serwer bez Dockera: `HANDNOTES_TOKEN=... ./bin/handnotes-server` (Java 17+) |
+| `livequill-server-<wersja>.tar.gz` | serwer bez Dockera: `LIVEQUILL_TOKEN=... ./bin/livequill-server` (Java 17+) |
 | `SHA256SUMS` | sumy kontrolne: `sha256sum -c SHA256SUMS` |
 
 Serwer jest też gotowym obrazem Dockera, więc nic nie trzeba budować:
 
 ```bash
 docker run -d --name livequill --restart unless-stopped -p 8787:8787 \
-  -e HANDNOTES_TOKEN=twoj-token -v "$PWD/data:/data" \
+  -e LIVEQUILL_TOKEN=twoj-token -v "$PWD/data:/data" \
   ghcr.io/marlenamakosza/livequill-server:latest
 ```
 
@@ -61,7 +61,7 @@ cd ~/AI-isolation/hand-notes
 
 | Plik | Co to |
 |---|---|
-| `dist/handnotes.apk` | aplikacja na tablet |
+| `dist/livequill.apk` | aplikacja na tablet |
 | `dist/server/` | serwer (używany przez Dockera) |
 | `dist/desktop/` | aplikacja na komputer |
 
@@ -74,7 +74,7 @@ Budowanie pojedynczej części: `./build.sh :android:assembleDebug` (to samo dla
 Token to wspólne hasło serwera, tabletu i komputera. Leży w pliku `.env` obok `docker-compose.yml`:
 
 ```bash
-echo "HANDNOTES_TOKEN=$(openssl rand -hex 4)" > .env    # tylko jeśli .env jeszcze nie istnieje
+echo "LIVEQUILL_TOKEN=$(openssl rand -hex 4)" > .env    # tylko jeśli .env jeszcze nie istnieje
 cat .env
 ```
 
@@ -123,15 +123,20 @@ cd ~/AI-isolation/hand-notes/dist
 python3 -m http.server 8000
 ```
 
-1. Na tablecie otwórz w przeglądarce `http://<IP-komputera>:8000/handnotes.apk`.
+1. Na tablecie otwórz w przeglądarce `http://<IP-komputera>:8000/livequill.apk`.
 2. Otwórz pobrany plik. Android zapyta o zgodę na instalację z nieznanych źródeł dla przeglądarki: zezwól.
 3. Na komputerze zatrzymaj serwer plików przez `Ctrl+C`.
 
-Inne sposoby: kabel USB i `adb install -r dist/handnotes.apk`, albo KDE Connect.
+Inne sposoby: kabel USB i `adb install -r dist/livequill.apk`, albo KDE Connect.
 
 **Aktualizacja:** zainstaluj nowe APK na stare. Notatki i ustawienia zostają.
 
-APK jest podpisane kluczem debug z `.cache/home/.android/`. Jeśli zbudujesz APK na innym komputerze albo skasujesz `.cache/`, klucz będzie inny i Android odmówi aktualizacji. Wtedy odinstaluj starą aplikację i zainstaluj nową. Notatki, które były już na serwerze, wrócą same po połączeniu.
+Aktualizacja działa tylko wtedy, gdy stare i nowe APK są podpisane tym samym kluczem:
+
+- Jeśli istnieje `~/.config/livequill-signing/signing.env` (patrz „Wydawanie nowej wersji”), `./build.sh` podpisuje `dist/livequill.apk` kluczem release, tym samym co GitHub Releases. Wtedy wersje z własnego buildu i z Releases instalują się jedna na drugą.
+- W przeciwnym razie powstaje APK debug, podpisane kluczem z `.cache/android/`.
+
+Przy innym kluczu Android pokaże „konflikt z istniejącym pakietem”. Wtedy odinstaluj starą aplikację i zainstaluj nową. **Przedtem sprawdź, czy status to `● online` bez zmian w kolejce.** Notatki z serwera wrócą same, ale te, które czekają w kolejce, przepadną.
 
 ### Pierwsze uruchomienie
 
@@ -177,12 +182,12 @@ Status na pasku:
 ./install-desktop.sh
 ```
 
-Skrypt instaluje aplikację do `~/.local/opt/handnotes` i dodaje **LiveQuill** do menu KDE. Przy pierwszym starcie wejdź w **Opcje**:
+Skrypt instaluje aplikację do `~/.local/opt/livequill` i dodaje **LiveQuill** do menu KDE. Przy pierwszym starcie wejdź w **Opcje**:
 
 - adres: `localhost`, jeśli serwer działa na tym samym komputerze, inaczej jego IP;
 - token: wartość z `.env`.
 
-Ustawienia leżą w `~/.config/handnotes/desktop.properties`.
+Ustawienia leżą w `~/.config/livequill/desktop.properties`.
 
 | Akcja | Jak |
 |---|---|
@@ -265,7 +270,7 @@ Jeśli zmieniał się moduł `shared/` (protokół), zaktualizuj wszystkie trzy 
 Wszystkie notatki są w jednym pliku: `data/ops.jsonl`.
 
 ```bash
-cp data/ops.jsonl ~/backup-handnotes-$(date +%F).jsonl
+cp data/ops.jsonl ~/backup-livequill-$(date +%F).jsonl
 ```
 
 Odtwarzanie: zatrzymaj serwer (`docker compose down`), podmień plik i uruchom serwer ponownie.
@@ -329,6 +334,15 @@ Klucz do podpisu APK leży w sekretach repozytorium (`LIVEQUILL_KEYSTORE_BASE64`
 
 - Jeszcze mniejsze opóźnienie pióra: rysowanie z pominięciem bufora klatki (`androidx.graphics` front-buffer) i `MotionEventPredictor`.
 - Eksport tablicy do PDF/SVG albo do `.xopp` (Xournal++).
+
+## Przejście z HandNotes
+
+Do wersji 0.3.0 projekt nazywał się HandNotes. Nowa nazwa pakietu Androida (`io.github.marlenamakosza.livequill`) oznacza dla Androida nową aplikację:
+1. Zainstaluj LiveQuill (obok starej HandNotes).
+2. W starej HandNotes sprawdź, czy status to `● online` bez zmian w kolejce.
+3. Odinstaluj HandNotes. W LiveQuill wpisz w ⚙ adres i token; notatki wrócą z serwera.
+
+Na PC dalej działają `HANDNOTES_TOKEN` i `HANDNOTES_DATA`, a aplikacja na PC czyta stare ustawienia z `~/.config/handnotes/`, dopóki nie zapisze nowych. Starą instalację w `~/.local/opt/handnotes` możesz usunąć, gdy LiveQuill działa. Przy Dockerze uruchom raz `docker compose up -d --build --remove-orphans`, żeby podmienić stary kontener `handnotes`.
 
 ## Licencja
 

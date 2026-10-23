@@ -1,11 +1,11 @@
 services:
-  handnotes:
+  livequill:
     build: ./server
     restart: unless-stopped
     ports:
       - "8787:8787"
     environment:
       # Same value goes into the tablet and desktop settings. Change it.
-      HANDNOTES_TOKEN: ${HANDNOTES_TOKEN:-change-me}
+      LIVEQUILL_TOKEN: ${LIVEQUILL_TOKEN:-${HANDNOTES_TOKEN:-change-me}}
     volumes:
       - ./data:/data

@@ -1,9 +1,9 @@
-package dev.handnotes.server
+package io.github.marlenamakosza.livequill.server
 
-import dev.handnotes.shared.Msg
-import dev.handnotes.shared.Proto
-import dev.handnotes.shared.PushRequest
-import dev.handnotes.shared.SeqOp
+import io.github.marlenamakosza.livequill.shared.Msg
+import io.github.marlenamakosza.livequill.shared.Proto
+import io.github.marlenamakosza.livequill.shared.PushRequest
+import io.github.marlenamakosza.livequill.shared.SeqOp
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.install
@@ -30,14 +30,15 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
-private val log = LoggerFactory.getLogger("handnotes")
+private val log = LoggerFactory.getLogger("livequill")
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8787
-    val token = System.getenv("HANDNOTES_TOKEN").orEmpty()
-    val store = OpStore(File(System.getenv("HANDNOTES_DATA") ?: "data"))
+    // HANDNOTES_* are the names from before the rename, still read so old setups keep working.
+    val token = (System.getenv("LIVEQUILL_TOKEN") ?: System.getenv("HANDNOTES_TOKEN")).orEmpty()
+    val store = OpStore(File(System.getenv("LIVEQUILL_DATA") ?: System.getenv("HANDNOTES_DATA") ?: "data"))
     val hub = Hub(store, token)
-    if (token.isEmpty()) log.warn("HANDNOTES_TOKEN is empty: any client in the network can connect")
+    if (token.isEmpty()) log.warn("LIVEQUILL_TOKEN is empty: any client in the network can connect")
 
     embeddedServer(CIO, port = port, host = "0.0.0.0") {
         install(WebSockets) {

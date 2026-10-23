@@ -15,11 +15,11 @@ fun versionCodeOf(v: String): Int {
 val keystorePath: String? = System.getenv("LIVEQUILL_KEYSTORE")
 
 android {
-    namespace = "dev.handnotes"
+    namespace = "io.github.marlenamakosza.livequill"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "dev.handnotes"
+        applicationId = "io.github.marlenamakosza.livequill"
         minSdk = 26
         targetSdk = 36
         versionCode = versionCodeOf(appVersion)

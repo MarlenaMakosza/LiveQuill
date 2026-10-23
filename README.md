@@ -33,14 +33,14 @@ Ready builds are on the [Releases](https://github.com/MarlenaMakosza/LiveQuill/r
 | `livequill-desktop-<version>-linux-x64.tar.gz` | extract, then run `./install-desktop.sh` inside (bundled JRE, no Java needed) |
 | `livequill-widget-<version>.tar.gz` | KDE Plasma widget: extract, then run `./install-widget.sh --add` |
 | `livequill-<version>.plasmoid` | the same widget for Plasma's "Install Widget From Local File" |
-| `livequill-server-<version>.tar.gz` | server without Docker: `HANDNOTES_TOKEN=... ./bin/handnotes-server` (Java 17+) |
+| `livequill-server-<version>.tar.gz` | server without Docker: `LIVEQUILL_TOKEN=... ./bin/livequill-server` (Java 17+) |
 | `SHA256SUMS` | checksums: `sha256sum -c SHA256SUMS` |
 
 The server also comes as a Docker image, so you need no build at all:
 
 ```bash
 docker run -d --name livequill --restart unless-stopped -p 8787:8787 \
-  -e HANDNOTES_TOKEN=your-secret -v "$PWD/data:/data" \
+  -e LIVEQUILL_TOKEN=your-secret -v "$PWD/data:/data" \
   ghcr.io/marlenamakosza/livequill-server:latest
 ```
 
@@ -72,7 +72,7 @@ The first build downloads about 1 GB and takes several minutes. Later builds tak
 
 | Path | What |
 |---|---|
-| `dist/handnotes.apk` | Android app |
+| `dist/livequill.apk` | Android app |
 | `dist/server/` | server (the Docker image uses it) |
 | `dist/desktop/` | desktop app with a bundled JRE |
 
@@ -83,7 +83,7 @@ To build a single part, run `./build.sh :android:assembleDebug`, `:server:instal
 Run `./build.sh` first. The server image copies the build from `server/build/install/`.
 
 ```bash
-echo "HANDNOTES_TOKEN=$(openssl rand -hex 4)" > .env   # once; the shared secret for all devices
+echo "LIVEQUILL_TOKEN=$(openssl rand -hex 4)" > .env   # once; the shared secret for all devices
 docker compose up -d --build
 curl http://localhost:8787/health                      # prints: ok
 ```
@@ -99,11 +99,11 @@ The container restarts on its own after a reboot. All notes live in one file, `d
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `HANDNOTES_TOKEN` | `change-me` in compose, empty (no auth) when run directly | shared secret |
-| `HANDNOTES_DATA` | `data` | directory for `ops.jsonl` |
+| `LIVEQUILL_TOKEN` | `change-me` in compose, empty (no auth) when run directly | shared secret |
+| `LIVEQUILL_DATA` | `data` | directory for `ops.jsonl` |
 | `PORT` | `8787` | listen port |
 
-To run without Docker: `HANDNOTES_TOKEN=... ./dist/server/bin/handnotes-server` (needs Java 17+).
+To run without Docker: `LIVEQUILL_TOKEN=... ./dist/server/bin/livequill-server` (needs Java 17+).
 
 The tablet needs the LAN IP of the server machine. Find it with `ip -4 -o addr show scope global`. A DHCP reservation in the router keeps the address from changing. If a firewall is active, open the port: `sudo ufw allow 8787/tcp`.
 
@@ -115,9 +115,14 @@ The tablet needs the LAN IP of the server machine. Find it with `ip -4 -o addr s
 cd dist && python3 -m http.server 8000
 ```
 
-Open `http://<pc-ip>:8000/handnotes.apk` in the tablet browser, allow installs from that browser, then stop the server with `Ctrl+C`. With USB debugging, `adb install -r dist/handnotes.apk` works too.
+Open `http://<pc-ip>:8000/livequill.apk` in the tablet browser, allow installs from that browser, then stop the server with `Ctrl+C`. With USB debugging, `adb install -r dist/livequill.apk` works too.
 
-A new APK installs over the old one and keeps notes and settings. The APK is signed with a debug key kept in `.cache/home/.android/`. An APK built with another key will not install over it. In that case, uninstall the old app first; notes already on the server sync back after you connect.
+A new APK installs over the old one and keeps notes and settings, as long as both are signed with the same key:
+
+- If `~/.config/livequill-signing/signing.env` exists (see [Releasing](#releasing)), `./build.sh` signs `dist/livequill.apk` with that release key, the same key as GitHub Releases. Local builds and release downloads then update each other.
+- Otherwise it is a debug APK, signed with a debug key kept in `.cache/android/`.
+
+Android refuses an update signed with another key ("conflicts with an existing package"). Then uninstall the old app first. Before you do, check that the status shows `● online` without queued changes: notes already on the server sync back after you connect, queued ones would be lost.
 
 **Connect.** The settings dialog opens on first start (later: ⚙). Enter the server IP (port 8787 is the default) and the token from `.env`. The toolbar status turns green: `● online`.
 
@@ -150,7 +155,7 @@ A new APK installs over the old one and keeps notes and settings. The APK is sig
 ./install-desktop.sh
 ```
 
-The script installs to `~/.local/opt/handnotes` and adds LiveQuill to the app menu. In **Options**, enter `localhost` (or the server IP) and the token. The settings are stored in `~/.config/handnotes/desktop.properties`.
+The script installs to `~/.local/opt/livequill` and adds LiveQuill to the app menu. In **Options**, enter `localhost` (or the server IP) and the token. The settings are stored in `~/.config/livequill/desktop.properties`.
 
 | Action | How |
 |---|---|
@@ -208,7 +213,7 @@ To upgrade, run `./install-widget.sh` again, without `--add` so you do not get a
 docker compose up -d --build
 ./install-desktop.sh      # close the running desktop app first
 ./install-widget.sh       # upgrade the Plasma widget
-# then install dist/handnotes.apk on the tablet
+# then install dist/livequill.apk on the tablet
 ```
 
 If `shared/` (the protocol) changed, update all three parts.
@@ -216,7 +221,7 @@ If `shared/` (the protocol) changed, update all three parts.
 ## Backup
 
 ```bash
-cp data/ops.jsonl ~/handnotes-backup-$(date +%F).jsonl
+cp data/ops.jsonl ~/livequill-backup-$(date +%F).jsonl
 ```
 
 To restore, stop the server with `docker compose down`, replace the file, and start the server again.
@@ -276,6 +281,12 @@ To build a signed APK locally, export the same values as `LIVEQUILL_KEYSTORE` (a
 
 - Lower pen latency with front-buffered rendering (`androidx.graphics`) and `MotionEventPredictor`.
 - Export a board to PDF/SVG, or to `.xopp` for Xournal++.
+
+## Upgrading from HandNotes
+
+The project was called HandNotes before 0.3.0. The new Android package name (`io.github.marlenamakosza.livequill`) makes it a new app: install LiveQuill, then uninstall HandNotes once it shows `online` with no queued changes. Your notes come back from the server.
+
+On the PC, `HANDNOTES_TOKEN` and `HANDNOTES_DATA` still work, and the desktop app reads its old settings from `~/.config/handnotes/` until it saves new ones. The old desktop install in `~/.local/opt/handnotes` can be deleted once LiveQuill runs. With Docker, run `docker compose up -d --build --remove-orphans` once to replace the old `handnotes` container.
 
 ## License
 

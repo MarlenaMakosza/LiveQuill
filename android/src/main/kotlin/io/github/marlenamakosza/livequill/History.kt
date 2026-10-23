@@ -1,9 +1,9 @@
-package dev.handnotes
+package io.github.marlenamakosza.livequill
 
-import dev.handnotes.shared.AddStroke
-import dev.handnotes.shared.EraseStroke
-import dev.handnotes.shared.Stroke
-import dev.handnotes.shared.newId
+import io.github.marlenamakosza.livequill.shared.AddStroke
+import io.github.marlenamakosza.livequill.shared.EraseStroke
+import io.github.marlenamakosza.livequill.shared.Stroke
+import io.github.marlenamakosza.livequill.shared.newId
 
 /**
  * Undo and redo per board, for this session. The op log is append-only, so undo never deletes

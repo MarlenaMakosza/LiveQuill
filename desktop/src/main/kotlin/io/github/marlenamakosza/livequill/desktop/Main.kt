@@ -1,4 +1,4 @@
-package dev.handnotes.desktop
+package io.github.marlenamakosza.livequill.desktop
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -12,7 +12,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import dev.handnotes.shared.Theme
+import io.github.marlenamakosza.livequill.shared.Theme
 import kotlin.math.floor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +51,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberDialogState
 import androidx.compose.ui.window.rememberWindowState
-import dev.handnotes.shared.Ink
+import io.github.marlenamakosza.livequill.shared.Ink
 import kotlinx.coroutines.delay
 
 fun main() = application {
