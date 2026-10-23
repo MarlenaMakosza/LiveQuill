@@ -17,7 +17,7 @@ The tablet works offline: it stores everything locally and syncs when the server
 - Infinite boards. Each board remembers its last view.
 - Live mirroring: strokes appear on the desktop while you write.
 - Offline-first sync. Changes queue on the tablet and go out on reconnect, also from the background via WorkManager.
-- Undo and redo (two-finger tap and three-finger tap), eraser, 4 colors, 4 widths.
+- Undo and redo (two-finger tap and three-finger tap), eraser, lasso select and move, 4 colors, 4 widths.
 - Dark mode on both apps.
 - The desktop follows the tablet view, or you pan and zoom on your own.
 - KDE Plasma widget: the current board on the desktop, live, right after login.
@@ -134,12 +134,14 @@ Android refuses an update signed with another key ("conflicts with an existing p
 | Undo | two-finger tap, or "↶ Undo" |
 | Redo | three-finger tap, or "↷ Redo" |
 | Erase | "Eraser" button, the stylus eraser end, or the stylus side button while writing |
+| Select and move | "Lasso", circle the strokes with the pen, then drag inside the dashed frame |
 | Show the whole board | "⌖ Fit all" |
 | Dark / light mode | "☾ Dark" / "☀ Light" (default: the system setting) |
 | Boards | "+ board", ◀ ▶, "Delete board" |
 | Draw with a finger | ⚙ → "Draw with finger too": one finger draws, two pan |
 
-- Undo is per board. It covers strokes and eraser passes, up to 200 steps in the current session. After a restart, undo removes your newest stroke.
+- Lasso picks the strokes with most of their points inside the loop. Touching outside the frame drops the selection; in lasso mode it also starts a new loop. A move is one undo step.
+- Undo is per board. It covers strokes, eraser passes and moves, up to 200 steps in the current session. After a restart, undo removes your newest stroke.
 - If a three-finger tap takes a screenshot instead, turn off the three-finger screenshot gesture in the Android settings.
 
 | Status | Meaning |

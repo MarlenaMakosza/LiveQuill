@@ -14,6 +14,7 @@
     <string name="fit_all">⌖ Fit all</string>
     <string name="width">Width %1$d</string>
     <string name="eraser">Eraser</string>
+    <string name="lasso">Lasso</string>
     <string name="undo">↶ Undo</string>
     <string name="redo">↷ Redo</string>
     <string name="light_mode">☀ Light</string>

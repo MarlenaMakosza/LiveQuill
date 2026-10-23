@@ -34,6 +34,7 @@ class MainActivity : Activity() {
     private lateinit var pageLabel: TextView
     private lateinit var status: TextView
     private lateinit var eraserBtn: Button
+    private lateinit var lassoBtn: Button
     private lateinit var widthBtn: Button
     private val history get() = app.history
     private val renderNow = Runnable { ink.render() }
@@ -105,8 +106,10 @@ class MainActivity : Activity() {
         bar.addView(gap())
         widthBtn = button("") { cycleWidth() }
         bar.addView(widthBtn)
-        eraserBtn = button(getString(R.string.eraser)) { setEraser(!ink.eraserMode) }
+        eraserBtn = button(getString(R.string.eraser)) { setTool(eraser = !ink.eraserMode, lasso = false) }
         bar.addView(eraserBtn)
+        lassoBtn = button(getString(R.string.lasso)) { setTool(eraser = false, lasso = !ink.lassoMode) }
+        bar.addView(lassoBtn)
         bar.addView(button(getString(R.string.undo)) { undo() })
         bar.addView(button(getString(R.string.redo)) { redo() })
         bar.addView(gap())
@@ -228,14 +231,18 @@ class MainActivity : Activity() {
             .show()
     }
 
-    private fun setEraser(on: Boolean) {
-        ink.eraserMode = on
-        eraserBtn.alpha = if (on) 1f else 0.55f
+    /** Eraser and lasso exclude each other; with both off, the pen draws. */
+    private fun setTool(eraser: Boolean, lasso: Boolean) {
+        ink.eraserMode = eraser
+        ink.lassoMode = lasso
+        if (!lasso) ink.clearSelection()
+        eraserBtn.alpha = if (eraser) 1f else 0.55f
+        lassoBtn.alpha = if (lasso) 1f else 0.55f
     }
 
     private fun selectColor(i: Int) {
         ink.color = colors[i]
-        setEraser(false)
+        setTool(eraser = false, lasso = false)
         colorViews.forEachIndexed { k, v ->
             val ring = if (dark) Color.WHITE else Color.BLACK
             (v.background as GradientDrawable).setStroke(dp(if (k == i) 3 else 1), if (k == i) ring else Color.GRAY)

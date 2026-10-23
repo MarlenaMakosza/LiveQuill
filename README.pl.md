@@ -157,6 +157,7 @@ Na pasku status powinien zmienić się na zielone `● online`.
 | Cofnij | tap dwoma palcami albo „↶ Cofnij” |
 | Przywróć | tap trzema palcami albo „↷ Ponów” |
 | Gumka | przycisk „Gumka”, gumka na końcu rysika albo przycisk boczny rysika podczas pisania |
+| Zaznacz i przesuń | „Lasso”, obrysuj kreski rysikiem, potem przeciągnij wewnątrz przerywanej ramki |
 | Pokaż całą tablicę | „⌖ Wszystko” |
 | Tryb ciemny/jasny | „☾ Ciemny” / „☀ Jasny” (domyślnie jak w systemie) |
 | Nowa tablica / przełączanie | „+ tablica”, ◀ ▶ |
@@ -164,7 +165,8 @@ Na pasku status powinien zmienić się na zielone `● online`.
 
 - Interfejs jest po polsku, gdy system jest po polsku. W innym przypadku jest po angielsku.
 - Każda tablica jest nieskończona i pamięta, gdzie ją ostatnio oglądałaś.
-- Cofanie działa osobno dla każdej tablicy i pamięta 200 kroków w bieżącej sesji. Po restarcie aplikacji „Cofnij” usuwa najnowszą własną kreskę.
+- Lasso zaznacza kreski, których większość punktów leży w obrysie. Dotknięcie poza ramką zdejmuje zaznaczenie, a w trybie lasso od razu zaczyna nowy obrys. Przesunięcie to jeden krok cofania.
+- Cofanie działa osobno dla każdej tablicy (kreski, gumka, przesunięcia) i pamięta 200 kroków w bieżącej sesji. Po restarcie aplikacji „Cofnij” usuwa najnowszą własną kreskę.
 - Jeśli tap trzema palcami robi zrzut ekranu, wyłącz w ustawieniach Androida gest zrzutu ekranu trzema palcami.
 
 Status na pasku:

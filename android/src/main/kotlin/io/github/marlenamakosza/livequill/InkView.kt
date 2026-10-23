@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.DashPathEffect
 import android.graphics.Paint
+import android.graphics.Path
 import android.os.Build
 import android.os.SystemClock
 import android.view.MotionEvent
@@ -21,7 +23,8 @@ import kotlin.math.floor
 import kotlin.math.hypot
 
 /**
- * Infinite board. The stylus draws; fingers pan (one or two) and zoom (two).
+ * Infinite board. The stylus draws, erases or selects with a lasso; fingers pan (one or two) and
+ * zoom (two). A lasso selection moves when dragged with the pen.
  *
  * The visible area renders into a bitmap. New pen segments go straight into it. During a pan or
  * zoom the bitmap is drawn transformed, and a full render happens at most every [RERENDER_MS]
@@ -32,6 +35,7 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
     var pageId: String? = null
         set(v) {
             field = v
+            clearSelection()
             loadViewport()
             render()
             notifyViewport(force = true)
@@ -44,10 +48,11 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
     var color = 0xFF111111.toInt()
     var baseWidth = 3f
     var eraserMode = false
+    var lassoMode = false
     var fingerDraw = false
     var onLive: ((Msg.Live) -> Unit)? = null
 
-    /** A finished pen stroke or eraser pass, for undo. */
+    /** A finished pen stroke, eraser pass or move, for undo. */
     var onAction: ((String, History.Action) -> Unit)? = null
 
     /** Quick tap with two fingers (undo) or three fingers (redo). */
@@ -93,7 +98,8 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
     // Stroke in progress, world units.
     private var activePointer = -1
     private var strokeTool = 0
-    private var erasing = false
+    private enum class Pen { DRAW, ERASE, LASSO, MOVE }
+    private var pen = Pen.DRAW
     private var strokeId = ""
     private var pts = FloatArray(3 * 256)
     private var n = 0
@@ -102,6 +108,24 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
     private var eraserX = -1f
     private var eraserY = -1f
     private val erased = ArrayList<Stroke>()
+
+    // Lasso and selection, world units.
+    private var lasso = FloatArray(2 * 256)
+    private var lassoN = 0
+    private var selection: List<Stroke> = emptyList()
+    private var selBounds: FloatArray? = null
+    private var dragX0 = 0f
+    private var dragY0 = 0f
+    private var dragDx = 0f
+    private var dragDy = 0f
+    /** Strokes left out of the bitmap while they are being moved. */
+    private var hidden: Set<String> = emptySet()
+    private val selPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.5f * density
+        pathEffect = DashPathEffect(floatArrayOf(8 * density, 6 * density), 0f)
+    }
+    private val lassoPath = Path()
 
     // Finger gesture.
     private val fingers = LinkedHashMap<Int, FloatArray>()
@@ -165,12 +189,18 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
         c.drawColor(Theme.background(dark))
         drawDots(c)
         val page = repo.model.page(pageId)
+        if (selection.isNotEmpty()) {
+            // Strokes erased meanwhile (undo, another device) drop out of the selection.
+            val alive = selection.filter { page?.strokes?.containsKey(it.id) == true }
+            if (alive.size != selection.size) setSelection(alive)
+        }
         if (page != null) {
             val l = ox
             val t = oy
             val r = ox + width / z
             val b = oy + height / z
             for (s in page.strokes.values) {
+                if (s.id in hidden) continue
                 val bb = bounds.getOrPut(s.id) { Ink.bounds(s) }
                 if (bb[2] < l || bb[0] > r || bb[3] < t || bb[1] > b) continue
                 drawStroke(c, s)
@@ -233,7 +263,8 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
             canvas.drawBitmap(bmp, 0f, 0f, null)
             canvas.restore()
         }
-        if (erasing && eraserX >= 0) canvas.drawCircle(eraserX, eraserY, ERASER_DP * density, cursor)
+        if (pen == Pen.ERASE && activePointer != -1 && eraserX >= 0) canvas.drawCircle(eraserX, eraserY, ERASER_DP * density, cursor)
+        drawSelection(canvas)
         val text = flashText
         if (text != null && SystemClock.uptimeMillis() < flashUntil) {
             val w = flashPaint.measureText(text) + 32 * density
@@ -289,7 +320,8 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
                 // Many tablets claim three fingers for a system gesture (screenshot) and cancel the
                 // app's touch. A fresh, still tap of 3+ fingers still counts as a tap then.
                 val cancelledTap = cancelledTapCount(e)
-                if (activePointer != -1 && !erasing) n = 0
+                if (activePointer != -1 && pen == Pen.DRAW) n = 0
+                if (activePointer != -1 && pen == Pen.MOVE) { dragDx = 0f; dragDy = 0f }
                 endStroke()
                 if (cancelledTap >= 3) tapViewport?.let { ox = it[0]; oy = it[1]; z = it[2] }
                 if (fingers.isNotEmpty()) endGesture()
@@ -357,9 +389,33 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
         activePointer = id
         strokeTool = tool
         if (Build.VERSION.SDK_INT >= 30) requestUnbufferedDispatch(e)
-        erasing = eraserMode || tool == MotionEvent.TOOL_TYPE_ERASER ||
+        val x = e.getX(i)
+        val y = e.getY(i)
+        val erase = eraserMode || tool == MotionEvent.TOOL_TYPE_ERASER ||
             (e.buttonState and MotionEvent.BUTTON_STYLUS_PRIMARY) != 0
-        if (erasing) eraseAt(e.getX(i), e.getY(i)) else begin(e.getX(i), e.getY(i), pressure(e, i, -1))
+        pen = when {
+            erase -> Pen.ERASE
+            insideSelection(x, y) -> Pen.MOVE
+            lassoMode -> Pen.LASSO
+            else -> Pen.DRAW
+        }
+        if (pen != Pen.MOVE) clearSelection()
+        when (pen) {
+            Pen.ERASE -> eraseAt(x, y)
+            Pen.LASSO -> { lassoN = 0; lassoAdd(x, y) }
+            Pen.MOVE -> beginMove(x, y)
+            Pen.DRAW -> begin(x, y, pressure(e, i, -1))
+        }
+    }
+
+    /** One pen sample, routed to the current tool. */
+    private fun penAt(x: Float, y: Float, p: Float) {
+        when (pen) {
+            Pen.ERASE -> eraseAt(x, y)
+            Pen.LASSO -> lassoAdd(x, y)
+            Pen.MOVE -> dragTo(x, y)
+            Pen.DRAW -> add(x, y, p)
+        }
     }
 
     private fun move(e: MotionEvent) {
@@ -370,13 +426,9 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
         if (activePointer != -1) {
             val i = e.findPointerIndex(activePointer)
             if (i < 0) return
-            for (h in 0 until e.historySize) {
-                val x = e.getHistoricalX(i, h)
-                val y = e.getHistoricalY(i, h)
-                if (erasing) eraseAt(x, y) else add(x, y, pressure(e, i, h))
-            }
-            if (erasing) eraseAt(e.getX(i), e.getY(i)) else add(e.getX(i), e.getY(i), pressure(e, i, -1))
-            if (!erasing) sendLive(false)
+            for (h in 0 until e.historySize) penAt(e.getHistoricalX(i, h), e.getHistoricalY(i, h), pressure(e, i, h))
+            penAt(e.getX(i), e.getY(i), pressure(e, i, -1))
+            if (pen == Pen.DRAW) sendLive(false)
             return
         }
         if (fingers.isEmpty()) return
@@ -422,9 +474,14 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
             return
         }
         if (id == activePointer) {
-            if (!erasing) {
-                add(e.getX(i), e.getY(i), pressure(e, i, -1))
-                commit()
+            when (pen) {
+                Pen.DRAW -> {
+                    add(e.getX(i), e.getY(i), pressure(e, i, -1))
+                    commit()
+                }
+                Pen.LASSO -> finishLasso()
+                Pen.MOVE -> finishMove()
+                Pen.ERASE -> {}
             }
             endStroke()
         } else if (fingers.remove(id) != null) {
@@ -547,15 +604,25 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
         sendLive(true)
         val stroke = Stroke(strokeId, pid, repo.deviceId, color, baseWidth, points)
         repo.addLocal(AddStroke(newId(), repo.deviceId, System.currentTimeMillis(), stroke))
-        onAction?.invoke(pid, History.Action.Add(listOf(stroke)))
+        onAction?.invoke(pid, History.Action(removed = emptyList(), added = listOf(stroke)))
     }
 
     private fun endStroke() {
         val pid = pageId
-        if (erasing && erased.isNotEmpty() && pid != null) onAction?.invoke(pid, History.Action.Erase(erased.toList()))
+        if (pen == Pen.ERASE && erased.isNotEmpty() && pid != null) {
+            onAction?.invoke(pid, History.Action(removed = erased.toList(), added = emptyList()))
+        }
         erased.clear()
+        if (pen == Pen.MOVE && hidden.isNotEmpty()) {
+            // Cancelled move: put the strokes back in place.
+            hidden = emptySet()
+            dragDx = 0f
+            dragDy = 0f
+            render()
+        }
+        lassoN = 0
         activePointer = -1
-        erasing = false
+        pen = Pen.DRAW
         eraserX = -1f
         n = 0
         invalidate()
@@ -573,6 +640,161 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
         val chunk = pts.copyOfRange(from * 3, n * 3)
         liveSent = n
         onLive?.invoke(Msg.Live(repo.deviceId, pid, strokeId, color, baseWidth, chunk, done))
+    }
+
+    // ---- Lasso and selection ----
+
+    private fun lassoAdd(sxv: Float, syv: Float) {
+        val x = wx(sxv)
+        val y = wy(syv)
+        if (lassoN > 0) {
+            val dx = (x - lasso[(lassoN - 1) * 2]) * z
+            val dy = (y - lasso[(lassoN - 1) * 2 + 1]) * z
+            if (dx * dx + dy * dy < 4f) return
+        }
+        if (lassoN * 2 + 2 > lasso.size) lasso = lasso.copyOf(lasso.size * 2)
+        lasso[lassoN * 2] = x
+        lasso[lassoN * 2 + 1] = y
+        lassoN++
+        invalidate()
+    }
+
+    /** Selects the strokes with most of their points inside the lasso. */
+    private fun finishLasso() {
+        val page = repo.model.page(pageId)
+        if (page == null || lassoN < 3) {
+            clearSelection()
+            return
+        }
+        var l = Float.MAX_VALUE
+        var t = Float.MAX_VALUE
+        var r = -Float.MAX_VALUE
+        var b = -Float.MAX_VALUE
+        for (k in 0 until lassoN) {
+            l = minOf(l, lasso[k * 2]); r = maxOf(r, lasso[k * 2])
+            t = minOf(t, lasso[k * 2 + 1]); b = maxOf(b, lasso[k * 2 + 1])
+        }
+        val picked = page.strokes.values.filter { s ->
+            val bb = bounds.getOrPut(s.id) { Ink.bounds(s) }
+            if (bb[2] < l || bb[0] > r || bb[3] < t || bb[1] > b) return@filter false
+            val p = s.points
+            var inside = 0
+            var i = 0
+            while (i < p.size) {
+                if (inLasso(p[i], p[i + 1])) inside++
+                i += 3
+            }
+            inside * 2 > p.size / 3
+        }
+        setSelection(picked)
+    }
+
+    /** Ray casting point-in-polygon test against the lasso. */
+    private fun inLasso(x: Float, y: Float): Boolean {
+        var inside = false
+        var j = lassoN - 1
+        for (k in 0 until lassoN) {
+            val xi = lasso[k * 2]
+            val yi = lasso[k * 2 + 1]
+            val xj = lasso[j * 2]
+            val yj = lasso[j * 2 + 1]
+            if ((yi > y) != (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside
+            j = k
+        }
+        return inside
+    }
+
+    private fun setSelection(strokes: List<Stroke>) {
+        selection = strokes
+        selBounds = if (strokes.isEmpty()) null else {
+            val all = strokes.map { bounds.getOrPut(it.id) { Ink.bounds(it) } }
+            floatArrayOf(all.minOf { it[0] }, all.minOf { it[1] }, all.maxOf { it[2] }, all.maxOf { it[3] })
+        }
+        invalidate()
+    }
+
+    fun clearSelection() {
+        if (selection.isEmpty() && hidden.isEmpty()) return
+        selection = emptyList()
+        selBounds = null
+        invalidate()
+    }
+
+    private fun insideSelection(sxv: Float, syv: Float): Boolean {
+        val bb = selBounds ?: return false
+        val x = wx(sxv)
+        val y = wy(syv)
+        val pad = 16 * density / z
+        return x >= bb[0] - pad && x <= bb[2] + pad && y >= bb[1] - pad && y <= bb[3] + pad
+    }
+
+    private fun beginMove(sxv: Float, syv: Float) {
+        dragX0 = wx(sxv)
+        dragY0 = wy(syv)
+        dragDx = 0f
+        dragDy = 0f
+        // The bitmap gets drawn without the selection; onDraw paints it at the drag offset.
+        hidden = selection.mapTo(HashSet()) { it.id }
+        render()
+    }
+
+    private fun dragTo(sxv: Float, syv: Float) {
+        dragDx = wx(sxv) - dragX0
+        dragDy = wy(syv) - dragY0
+        invalidate()
+    }
+
+    /** Replaces the selected strokes with moved copies: erase + add, one undo step. */
+    private fun finishMove() {
+        val pid = pageId ?: return
+        val dx = dragDx
+        val dy = dragDy
+        hidden = emptySet()
+        dragDx = 0f
+        dragDy = 0f
+        if ((dx * dx + dy * dy) * z * z < 4f) {
+            render()
+            return
+        }
+        val now = System.currentTimeMillis()
+        val moved = selection.map { s ->
+            val p = s.points.copyOf()
+            var i = 0
+            while (i < p.size) {
+                p[i] += dx
+                p[i + 1] += dy
+                i += 3
+            }
+            Stroke(newId(), s.pageId, repo.deviceId, s.color, s.width, p)
+        }
+        for (s in selection) repo.addLocal(EraseStroke(newId(), repo.deviceId, now, s.pageId, s.id))
+        for (s in moved) repo.addLocal(AddStroke(newId(), repo.deviceId, now, s))
+        onAction?.invoke(pid, History.Action(removed = selection, added = moved))
+        setSelection(moved)
+        render()
+    }
+
+    private fun drawSelection(canvas: Canvas) {
+        if (pen == Pen.LASSO && activePointer != -1 && lassoN > 1) {
+            lassoPath.reset()
+            lassoPath.moveTo(sx(lasso[0]), sy(lasso[1]))
+            for (k in 1 until lassoN) lassoPath.lineTo(sx(lasso[k * 2]), sy(lasso[k * 2 + 1]))
+            selPaint.color = SELECTION_COLOR
+            canvas.drawPath(lassoPath, selPaint)
+        }
+        val bb = selBounds ?: return
+        if (hidden.isNotEmpty()) {
+            canvas.save()
+            canvas.translate(dragDx * z, dragDy * z)
+            for (s in selection) drawStroke(canvas, s)
+            canvas.restore()
+        }
+        val pad = 6 * density
+        selPaint.color = SELECTION_COLOR
+        canvas.drawRect(
+            sx(bb[0] + dragDx) - pad, sy(bb[1] + dragDy) - pad,
+            sx(bb[2] + dragDx) + pad, sy(bb[3] + dragDy) + pad, selPaint,
+        )
     }
 
     private fun eraseAt(sxv: Float, syv: Float) {
@@ -613,5 +835,6 @@ class InkView(ctx: Context, private val repo: Repo) : View(ctx) {
         const val RERENDER_MS = 120L
         const val TAP_MS = 350L
         const val TAP_SLOP_DP = 20f
+        const val SELECTION_COLOR = 0xFF4C8BF5.toInt()
     }
 }
