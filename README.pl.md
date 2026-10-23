@@ -38,6 +38,8 @@ Jeśli korzystasz z gotowych plików, pomiń punkty 1–2 (i budowanie w punkcie
 
 ## 1. Wymagania (raz)
 
+Na tablecie: Android 8.0+ i **aktywny rysik**. W wersji 1.0 nie da się pisać palcem (szczegóły w punkcie 4).
+
 Na komputerze potrzebujesz tylko Dockera i rsync. Javy, Gradle'a ani Android SDK nie instalujesz: są w obrazie Dockera.
 
 ```bash
@@ -114,6 +116,8 @@ Jeśli masz włączony firewall, otwórz port: `sudo ufw allow 8787/tcp` albo `s
 
 ## 4. Tablet
 
+**Wymagany tablet z Androidem 8.0 lub nowszym i aktywnym rysikiem** (S Pen, USI, Wacom EMR i podobne). W wersji 1.0 piszesz tylko rysikiem; palce przesuwają, zoomują i robią tap cofnij/przywróć. Pisanie palcem jest planowane na wersję 1.1 ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
+
 ### Instalacja APK
 
 Przeciąganie APK do komunikatorów często kończy się błędem „pusty plik”. Najpewniej pobrać go prosto z komputera:
@@ -161,12 +165,12 @@ Na pasku status powinien zmienić się na zielone `● online`.
 | Pokaż całą tablicę | „⌖ Wszystko” |
 | Tryb ciemny/jasny | „☾ Ciemny” / „☀ Jasny” (domyślnie jak w systemie) |
 | Nowa tablica / przełączanie | „+ tablica”, ◀ ▶ |
-| Rysowanie palcem | ⚙ → „Rysuj też palcem”: wtedy 1 palec rysuje, 2 przesuwają |
 
 - Interfejs jest po polsku, gdy system jest po polsku. W innym przypadku jest po angielsku.
 - Każda tablica jest nieskończona i pamięta, gdzie ją ostatnio oglądałaś.
 - Lasso zaznacza kreski, których większość punktów leży w obrysie. Dotknięcie poza ramką zdejmuje zaznaczenie, a w trybie lasso od razu zaczyna nowy obrys. Przesunięcie to jeden krok cofania.
 - Cofanie działa osobno dla każdej tablicy (kreski, gumka, przesunięcia) i pamięta 200 kroków w bieżącej sesji. Po restarcie aplikacji „Cofnij” usuwa najnowszą własną kreskę.
+- W ⚙ jest eksperymentalny przełącznik „Rysuj też palcem” (1 palec rysuje, 2 przesuwają). W wersji 1.0 nie jest obsługiwany; porządne pisanie palcem jest planowane na 1.1 ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
 - Jeśli tap trzema palcami robi zrzut ekranu, wyłącz w ustawieniach Androida gest zrzutu ekranu trzema palcami.
 
 Status na pasku:
@@ -332,7 +336,12 @@ Wersje zaczynające się od `0.` są oznaczane jako pre-release. Ręczne uruchom
 
 Klucz do podpisu APK leży w sekretach repozytorium (`LIVEQUILL_KEYSTORE_BASE64`, `LIVEQUILL_STORE_PASSWORD`, `LIVEQUILL_KEY_ALIAS`, `LIVEQUILL_KEY_PASSWORD`). Lokalna kopia jest w `~/.config/livequill-signing/`. Zrób jej kopię zapasową: APK podpisane innym kluczem nie zainstaluje się na poprzednią wersję.
 
-## Pomysły na dalej
+## Plany
+
+**Wersja 1.1**
+- Pisanie bez rysika: palec jako pełnoprawny tryb, z działającym przesuwaniem, zoomem i tapem cofnij/przywróć ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
+
+**Pomysły na później**
 
 - Jeszcze mniejsze opóźnienie pióra: rysowanie z pominięciem bufora klatki (`androidx.graphics` front-buffer) i `MotionEventPredictor`.
 - Eksport tablicy do PDF/SVG albo do `.xopp` (Xournal++).

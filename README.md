@@ -49,7 +49,7 @@ To build from source instead, read on.
 ## Requirements
 
 - Docker with the compose plugin, and rsync. JDK, Gradle and the Android SDK run inside a build image; you do not install them.
-- Android 8.0 (API 26) or newer on the tablet.
+- An Android 8.0 (API 26) or newer tablet **with an active stylus** (S Pen, USI, Wacom EMR and similar). In 1.0 you write with the stylus only; fingers pan, zoom and tap for undo/redo. Drawing with a finger is planned for 1.1 ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
 - Linux desktop for the viewer. Pinning was tested on KDE Plasma (Wayland via XWayland).
 - About 3 GB of disk for the build image, the Gradle cache and the output.
 
@@ -138,10 +138,10 @@ Android refuses an update signed with another key ("conflicts with an existing p
 | Show the whole board | "⌖ Fit all" |
 | Dark / light mode | "☾ Dark" / "☀ Light" (default: the system setting) |
 | Boards | "+ board", ◀ ▶, "Delete board" |
-| Draw with a finger | ⚙ → "Draw with finger too": one finger draws, two pan |
 
 - Lasso picks the strokes with most of their points inside the loop. Touching outside the frame drops the selection; in lasso mode it also starts a new loop. A move is one undo step.
 - Undo is per board. It covers strokes, eraser passes and moves, up to 200 steps in the current session. After a restart, undo removes your newest stroke.
+- ⚙ has an experimental "Draw with finger too" switch (one finger draws, two pan). It is not supported in 1.0; proper finger input is planned for 1.1 ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
 - If a three-finger tap takes a screenshot instead, turn off the three-finger screenshot gesture in the Android settings.
 
 | Status | Meaning |
@@ -279,7 +279,12 @@ The APK signing key comes from repository secrets: `LIVEQUILL_KEYSTORE_BASE64` (
 
 To build a signed APK locally, export the same values as `LIVEQUILL_KEYSTORE` (a file path), `LIVEQUILL_STORE_PASSWORD`, `LIVEQUILL_KEY_ALIAS` and `LIVEQUILL_KEY_PASSWORD`, then run `./gradlew :android:assembleRelease`.
 
-## Ideas
+## Roadmap
+
+**1.1**
+- Drawing without a stylus: finger input as a real mode, with working pan/zoom and undo/redo taps ([#4](https://github.com/MarlenaMakosza/LiveQuill/issues/4)).
+
+**Later ideas**
 
 - Lower pen latency with front-buffered rendering (`androidx.graphics`) and `MotionEventPredictor`.
 - Export a board to PDF/SVG, or to `.xopp` for Xournal++.
